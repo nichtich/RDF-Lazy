@@ -13,7 +13,7 @@ my $graph = RDF::Lazy->new;
 isa_ok $graph, 'RDF::Lazy';
 
 my $lit = $graph->node( literal("Geek & Poke") );
-isa_ok $lit, 'RDF::Light::Node::Literal';
+isa_ok $lit, 'RDF::Lazy::Literal';
 ok ($lit->is_literal && !$lit->is_resource && !$lit->is_blank, 'is_literal');
 is $lit->str, 'Geek & Poke', 'stringify literal';
 is $lit->esc, 'Geek &amp; Poke', 'HTML escape literal';
@@ -38,18 +38,18 @@ ok $l1->is_en && $l1->is_en_, 'is_en_ and is_en';
 
 #diag('blank nodes');
 my $blank = $graph->node( blank('x1') );
-isa_ok $blank, 'RDF::Light::Node::Blank';
+isa_ok $blank, 'RDF::Lazy::Blank';
 ok (!$blank->is_literal && !$blank->is_resource && $blank->is_blank, 'is_blank');
 is $blank->id, 'x1', 'blank id';
 
 is $graph->blank("x1")->id, $blank->id, 'construct via ->blank';
-is RDF::Light::Node::Blank->new( $graph, 'x1' )->id, $blank->id, 'blank constructor';
+is RDF::Lazy::Blank->new( $graph, 'x1' )->id, $blank->id, 'blank constructor';
 
 # TODO: test accessing properties of blank nodes
 
 #diag('resource nodes');
 my $uri = $graph->node( iri('http://example.com/"') );
-isa_ok $uri, 'RDF::Light::Node::Resource';
+isa_ok $uri, 'RDF::Lazy::Resource';
 ok (!$uri->is_literal && $uri->is_resource && !$uri->is_blank, 'is_resource');
 is "$uri", 'http://example.com/"', 'stringify URI';
 is $uri->href, 'http://example.com/&quot;', 'HTML escape URI';
