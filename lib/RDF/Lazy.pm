@@ -18,6 +18,8 @@ use RDF::Trine::NamespaceMap;
 use CGI qw(escapeHTML);
 
 use RDF::Lazy::Node;
+use Scalar::Util qw(blessed);
+use Carp qw(croak);
 
 our $AUTOLOAD;
 
@@ -25,8 +27,12 @@ sub new {
     my ($class, %arg) = @_;
 
 	# TODO: constructor is not lazy enough
-    my $namespaces    = $arg{namespaces} || RDF::Trine::NamespaceMap->new;
-    my $model         = $arg{model}      || RDF::Trine::Model->new;
+    my $namespaces = $arg{namespaces} || RDF::Trine::NamespaceMap->new;
+    $namespaces = RDF::Trine::NamespaceMap->new( $namespaces ) unless 
+		blessed($namespaces) and $namespaces->isa('RDF::Trine::NamespaceMap');
+
+    my $model = $arg{model} || RDF::Trine::Model->new;
+	# TODO: Store, Graph, serialization...
 
     bless {
         namespaces => $namespaces,
@@ -36,7 +42,12 @@ sub new {
 
 sub model { $_[0]->{model} }
 
-sub objects { # TODO: rename to 'attr' or 'prop' ?
+sub objects {
+	# depreciated
+	get ( @_ );
+}
+
+sub get {
     my $self     = shift;
     my $subject  = shift;
     my $property = shift; # mandatory
@@ -45,7 +56,6 @@ sub objects { # TODO: rename to 'attr' or 'prop' ?
     $subject = $self->node($subject)
         unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
 
-    # TODO: support ns:local syntax in addition to ns_local
     my $all = ($property =~ s/^(.+[^_])_$/$1/) ? 1 : 0;
     my $predicate = $self->node($property);
 
@@ -96,15 +106,20 @@ sub node {
 
     if (!UNIVERSAL::isa( $_[0], 'RDF::Trine::Node' )) {
         my $name = shift;
-        return unless defined $name and $name =~ /^(([^_]*)_)?([^_]+.*)$/;
+        return unless defined $name;
+		my ($prefix,$local,$uri);
 
-        my $local = $3;
-        $local =~ s/__/_/g;
+	    if ( $name =~ /^([^:]*):([^:]*)$/ ) {
+            ($prefix,$local) = ($1,$2);
+		} elsif ( $name =~ /^(([^_:]*)_)?([^_:]+.*)$/ ) {
+            ($prefix,$local) = ($2,$3);
+            $local =~ s/__/_/g;
+	    } else {
+			return;
+		}
 
-        my $uri;
-
-        if (defined $2) {
-            $uri = $self->{namespaces}->uri("$2:$local");
+        if (defined $prefix) {
+            $uri = $self->{namespaces}->uri("$prefix:$local");
         } else {
             # TODO: Fix bug in RDF::Trine::NamespaceMap, line 133
             # $predicate = $self->{namespaces}->uri(":$local");
@@ -188,7 +203,7 @@ method, so the following statements are equivalent:
     $graph->alice;
     $graph->node('alice');
 
-=method objects ( $subject, $property )
+=method get ( $subject, $property [, @filters ] )
 
 Returns a list of objects that occur in statements in this graph. The full
 functionality of this method is not fixed yet.

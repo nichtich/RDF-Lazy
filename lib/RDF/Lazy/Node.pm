@@ -59,7 +59,11 @@ sub turtle {
     return $_[0]->graph->turtle( @_ );
 }
 
-sub objects { # TODO: rename to 'attr' or 'prop' ?
+sub get {
+    $_[0]->graph->objects( @_ ); 
+}
+
+sub objects { # depreciated
     $_[0]->graph->objects( @_ ); 
 }
 
