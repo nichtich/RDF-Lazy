@@ -9,7 +9,7 @@ use RDF::Trine::NamespaceMap;
 use Data::Dumper;
 use Template;
 
-use RDF::Light::Graph;
+use RDF::Lazy;
 use Carp;
 
 sub ttl_model {
@@ -21,7 +21,7 @@ sub ttl_model {
     return $model;
 }
 
-my $graph = RDF::Light::Graph->new;
+my $graph = RDF::Lazy->new;
 
 my $vars;
 my $s = $graph->literal("hallo","en");
@@ -40,7 +40,7 @@ my $model = ttl_model <<'TURTLE';
 TURTLE
 
 my $map = RDF::Trine::NamespaceMap->new({foaf => iri('http://xmlns.com/foaf/0.1/')});
-$graph = RDF::Light::Graph->new( namespaces => $map, model => $model );
+$graph = RDF::Lazy->new( namespaces => $map, model => $model );
 
 my $a = $graph->resource('http://example.com/"');
  

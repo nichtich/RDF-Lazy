@@ -1,20 +1,18 @@
 use strict;
 use warnings;
-package RDF::Light::Graph;
-
-=head1 NAME
-
-RDF::Light::Graph - Lightweight access to RDF data
+package RDF::Lazy;
+#ABSTRACT: Lazy typing access to RDF data
 
 =head1 DESCRIPTION
 
-This package provides classes for a node-centric API to access RDF data. The
-classes wrap L<RDF::Trine::Node> and its subclasses for easy use of RDF data,
-especially within L<Template> Toolkit.  Basically there is RDF::Light::Graph
-for RDF graphs and there are RDF::Light::Literal, RDF::Light::Resource, and
-RDF::Light::Blank for RDF nodes, which each belong to an RDF graph.  Internally
-each node is represented by a L<RDF::Trine::Node> objects that is connected to
-a particular RDF::Light::Graph.
+This module wraps L<RDF::Trine::Node> to provide simple node-centric access to
+RDF data. It was designed to access RDF within L<Template> Toolkit but you can
+use it independently.
+
+Basically there is RDF::Lazy for RDF graphs and there are RDF::Light::Literal,
+RDF::Light::Resource, and RDF::Light::Blank for RDF nodes, which each belong to
+an RDF graph.  Internally each node is represented by a L<RDF::Trine::Node>
+objects that is connected to a particular RDF::Lazy.
 
 =cut
 
@@ -26,6 +24,8 @@ our $AUTOLOAD;
 
 sub new {
     my ($class, %arg) = @_;
+
+	# TODO: constructor is not lazy enough
     my $namespaces    = $arg{namespaces} || RDF::Trine::NamespaceMap->new;
     my $model         = $arg{model}      || RDF::Trine::Model->new;
 
@@ -398,7 +398,7 @@ Returns the underlying L<RDF::Trine::Node>.
 
 =item graph
 
-Returns the underlying graph L<RDF::Light::Graph> that the node belongs to.
+Returns the underlying graph L<RDF::Lazy> that the node belongs to.
 
 =item turtle
 
@@ -471,7 +471,7 @@ are equivalent:
 
 =back
 
-You can also add filters in a XPath-like language (the use of RDF::Light::Graph 
+You can also add filters in a XPath-like language (the use of RDF::Lazy 
 in a template is an example of a "RDFPath" language):
   
     $x->dc_title('@en')   # literal with language tag @en
@@ -484,7 +484,7 @@ in a template is an example of a "RDFPath" language):
 
 =head1 GRAPH METHODS
 
-An instance of RDF::Light::Graph wraps access to a set of RDF triples by
+An instance of RDF::Lazy wraps access to a set of RDF triples by
 using qualified names with namespace prefixes instead of full URIs.
 
 =over 4

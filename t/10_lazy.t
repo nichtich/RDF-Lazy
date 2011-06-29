@@ -7,10 +7,10 @@ use RDF::Trine::NamespaceMap;
 use RDF::Trine::Parser;
 use Data::Dumper;
 
-use_ok 'RDF::Light::Graph';
+use_ok 'RDF::Lazy';
 
-my $graph = RDF::Light::Graph->new;
-isa_ok $graph, 'RDF::Light::Graph';
+my $graph = RDF::Lazy->new;
+isa_ok $graph, 'RDF::Lazy';
 
 my $lit = $graph->node( literal("Geek & Poke") );
 isa_ok $lit, 'RDF::Light::Node::Literal';
@@ -21,7 +21,7 @@ is $lit->type, undef, 'untyped literal';
 
 is $graph->literal("Geek & Poke")->str, $lit->str, 'construct via ->literal';
 
-diag('language tags');
+#diag('language tags');
 my $l1 = $graph->literal("bill","en-GB");
 my $l2 = $graph->literal("check","en-US");
 is "$l1", "bill", 'literal with language code';
@@ -36,7 +36,7 @@ $l1 = $graph->literal("love","en");
 ok $l1->is_en && $l1->is_en_, 'is_en_ and is_en';
 
 
-diag('blank nodes');
+#diag('blank nodes');
 my $blank = $graph->node( blank('x1') );
 isa_ok $blank, 'RDF::Light::Node::Blank';
 ok (!$blank->is_literal && !$blank->is_resource && $blank->is_blank, 'is_blank');
@@ -47,7 +47,7 @@ is RDF::Light::Node::Blank->new( $graph, 'x1' )->id, $blank->id, 'blank construc
 
 # TODO: test accessing properties of blank nodes
 
-diag('resource nodes');
+#diag('resource nodes');
 my $uri = $graph->node( iri('http://example.com/"') );
 isa_ok $uri, 'RDF::Light::Node::Resource';
 ok (!$uri->is_literal && $uri->is_resource && !$uri->is_blank, 'is_resource');
@@ -66,7 +66,7 @@ my $model = RDF::Trine::Model->new;
 my $parser = RDF::Trine::Parser->new('turtle');
 $parser->parse_into_model( $base, join('',<DATA>), $model );
 
-$graph = RDF::Light::Graph->new( namespaces => $map, model => $model );
+$graph = RDF::Lazy->new( namespaces => $map, model => $model );
 
 my $obj = [ map { "$_" }
     $graph->objects( iri('http://example.org/alice'), 'foaf_knows' ) ];
@@ -113,4 +113,3 @@ __DATA__
 <http://example.org/alice> foaf:name "Alice" .
 <http://example.org/bob>   foaf:name "Bob" .
 <http://example.org/alice> x:zonk "foo"@en .
-

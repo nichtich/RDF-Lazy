@@ -1,15 +1,6 @@
 use strict;
+use Test::More;
 
-my @modules;
+use_ok 'RDF::Lazy';
 
-BEGIN { @modules = qw(
-RDF::Light
-RDF::Light::Graph
-RDF::Light::Source
-RDF::Light::Source::Union 
-RDF::Light::Source::Cascade
-); }
-
-use Test::More tests => scalar @modules;
-
-use_ok($_) for @modules;
+done_testing;
