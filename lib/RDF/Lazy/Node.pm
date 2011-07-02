@@ -14,8 +14,12 @@ L<RDF::Lazy::Literal>, L<RDF::Lazy::Resource>, and L<RDF::Lazy::Blank>.
 use RDF::Lazy::Literal;
 use RDF::Lazy::Resource;
 use RDF::Lazy::Blank;
+use RDF::Trine qw(iri);
+use Carp qw(carp);
 
 our $AUTOLOAD;
+# TODO: rdfs???
+our $rdf_type = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 
 sub trine { shift->[0]; }
 sub graph { shift->[1]; }
@@ -33,6 +37,21 @@ sub AUTOLOAD {
     $method =~ s/.*:://;
 
     return $self->_autoload( $method, @_ );
+}
+
+sub type {
+    my $self = shift;
+	if ( @_ ) {
+        my $types = $self->graph->get_( $self, $rdf_type ); # TODO use filter?
+	    foreach ( @_ ) {
+			my $type = $self->graph->node( $_ );
+		    return 1 if (grep { $_ eq $type } @$types);
+		}
+		return 0;
+	} else {
+	    # TODO: return multiple types on request
+	    $self->graph->get( $self, $rdf_type );
+	}
 }
 
 sub is {
@@ -59,19 +78,21 @@ sub turtle {
     return $_[0]->graph->turtle( @_ );
 }
 
-sub get {
-    $_[0]->graph->objects( @_ ); 
-}
-
-sub objects { # depreciated
-    $_[0]->graph->objects( @_ ); 
-}
+sub get  { $_[0]->graph->get( @_ ); }
+sub get_ { $_[0]->graph->get_( @_ ); }
+sub rel  { $_[0]->graph->rel( @_ ); }
+sub rel_ { $_[0]->graph->rel_( @_ ); }
 
 sub _autoload {
     my $self     = shift;
     my $property = shift;
     return if $property =~ /^(query|lang)$/; # reserved words
-    return $self->objects( $property, @_ );
+    return $self->get( $property, @_ );
+}
+
+sub objects {
+	carp __PACKAGE__ . '::objects is depreciated - use ::get instead!';
+    $_[0]->graph->get( @_ ); 
 }
 
 1;
@@ -118,6 +139,11 @@ Returns true if the node is a literal / resource / blank node.
 =item is ( $check1 [, $check2 ... ] ) 
 
 Checks whether the node fullfills some matching criteria. 
+
+=item type ( [ @types ] )
+
+Returns some rdf:type of the node (if no types are provided) or checks
+whether this node is of any of the provided types.
 
 =item trine
 

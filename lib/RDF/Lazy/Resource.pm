@@ -6,7 +6,7 @@ package RDF::Lazy::Resource;
 use base 'RDF::Lazy::Node';
 use CGI qw(escapeHTML);
 
-use overload '""' => sub { shift->str; };
+use overload '""' => \&str, 'eq' => \&eq;
 
 sub new {
     my $class    = shift;
@@ -30,6 +30,11 @@ sub uri {
 sub href { 
 	# TODO: check whether non-XML characters are possible in URI values
     escapeHTML(shift->trine->uri_value); 
+}
+
+sub eq { 
+    my ($a,$b) = @_; 
+	"$a" eq "$b"; 
 }
 
 *esc = *href;

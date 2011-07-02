@@ -19,7 +19,7 @@ use CGI qw(escapeHTML);
 
 use RDF::Lazy::Node;
 use Scalar::Util qw(blessed);
-use Carp qw(croak);
+use Carp qw(carp croak);
 
 our $AUTOLOAD;
 
@@ -43,8 +43,31 @@ sub new {
 sub model { $_[0]->{model} }
 
 sub objects {
-	# depreciated
+	carp __PACKAGE__ . '::objects is depreciated - use ::get instead!';
 	get ( @_ );
+}
+
+sub get_ { # TODO: merge with sub get
+    my ($self,$subject,$property,@filter) = @_;
+
+    $subject = $self->node($subject)
+        unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
+
+    my $predicate = $self->node($property);
+
+    if (defined $predicate) {
+        my @objects = $self->{model}->objects( $subject->trine, $predicate->trine );
+
+        @objects = map { $self->node( $_ ) } @objects;
+
+        # TODO apply filters one by one and return in order of filters
+        @objects = grep { $_->is(@filter) } @objects
+            if @filter;
+
+        return \@objects if @objects;
+    }
+
+    return;
 }
 
 sub get {
@@ -78,6 +101,14 @@ sub get {
     }
 
     return;
+}
+
+sub rel {
+    # TODO
+}
+
+sub rel_ {
+    croak 'not implemented yet';
 }
 
 sub turtle { # FIXME
