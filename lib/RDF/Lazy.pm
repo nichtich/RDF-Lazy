@@ -24,15 +24,48 @@ use Carp qw(carp croak);
 our $AUTOLOAD;
 
 sub new {
-    my ($class, %arg) = @_;
+	my $class = shift;
+	my ($rdf, %arg) = (@_ % 2) ? @_ : (undef,@_);
 
-	# TODO: constructor is not lazy enough
     my $namespaces = $arg{namespaces} || RDF::Trine::NamespaceMap->new;
     $namespaces = RDF::Trine::NamespaceMap->new( $namespaces ) unless 
 		blessed($namespaces) and $namespaces->isa('RDF::Trine::NamespaceMap');
 
-    my $model = $arg{model} || RDF::Trine::Model->new;
-	# TODO: Store, Graph, serialization...
+    my $model;
+    if (defined $rdf) {
+	    if (blessed $rdf) {
+	        if ($rdf->isa('RDF::Trine::Graph')) {
+				# we could use $rdf->{model} instead but not sure if we want
+				$rdf = $rdf->get_statements; # by value
+			}
+		    if ($rdf->isa('RDF::Trine::Model')) {
+			    $model = $rdf; # by reference
+	        } elsif ($rdf->isa('RDF::Trine::Store')) {
+		        $model = RDF::Trine::Model->new($rdf); # by reference
+			} elsif ($rdf->isa('RDF::Trine::Iterator::Graph')) { 
+		        $model = RDF::Trine::Model->temporary_model;
+				$model->begin_bulk_ops;
+				while (my $row = $rdf->next) { 
+					$model->add_statement( $row ); # by value
+				}
+				$model->end_bulk_ops;
+	        } elsif ($rdf->isa('RDF::Trine::Statement')) {
+		        $model = RDF::Trine::Model->temporary_model;
+				$model->add_statement( $rdf ); # by value
+			}
+        } else {
+			# TODO: parse from file, glob, or string
+	        $model = RDF::Trine::Model->temporary_model;
+			my $format = $arg{format} || 'turtle';
+			my $base   = $arg{base} || 'http://localhost/';
+			my $parser = RDF::Trine::Parser->new( $format );
+			$parser->parse_into_model( $base, $rdf, $model );
+        }
+		croak __PACKAGE__ . '::new got unknown rdf source' unless $model;
+	} else {
+		# TODO: use general parameter 'rdf' or 'data' instead of 'model'?
+        $model = $arg{model} || RDF::Trine::Model->new;
+	}
 
     bless {
         namespaces => $namespaces,
@@ -41,6 +74,8 @@ sub new {
 }
 
 sub model { $_[0]->{model} }
+
+sub size { $_[0]->{model}->size }
 
 sub objects {
 	carp __PACKAGE__ . '::objects is depreciated - use ::get instead!';
