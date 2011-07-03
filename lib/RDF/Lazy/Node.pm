@@ -42,7 +42,7 @@ sub AUTOLOAD {
 sub type {
     my $self = shift;
 	if ( @_ ) {
-        my $types = $self->graph->get_( $self, $rdf_type ); # TODO use filter?
+        my $types = $self->graph->rel_( $self, $rdf_type ); # TODO use filter?
 	    foreach ( @_ ) {
 			my $type = $self->graph->node( $_ );
 		    return 1 if (grep { $_ eq $type } @$types);
@@ -50,7 +50,7 @@ sub type {
 		return 0;
 	} else {
 	    # TODO: return multiple types on request
-	    $self->graph->get( $self, $rdf_type );
+	    $self->graph->rel( $self, $rdf_type );
 	}
 }
 
@@ -74,25 +74,26 @@ sub is {
     return 0;
 }
 
-sub turtle {
-    return $_[0]->graph->turtle( @_ );
-}
+sub turtle { $_[0]->graph->turtle( @_ ); }
+*ttl = *turtle;
 
-sub get  { $_[0]->graph->get( @_ ); }
-sub get_ { $_[0]->graph->get_( @_ ); }
 sub rel  { $_[0]->graph->rel( @_ ); }
-sub rel_ { $_[0]->graph->rel_( @_ ); }
+sub rels { $_[0]->graph->rels( @_ ); }
+sub rev  { $_[0]->graph->rev( @_ ); }
+sub revs { $_[0]->graph->revs( @_ ); }
+*rel_ = *rels;
+*rev_ = *revs;
 
 sub _autoload {
     my $self     = shift;
     my $property = shift;
     return if $property =~ /^(query|lang)$/; # reserved words
-    return $self->get( $property, @_ );
+    return $self->rel( $property, @_ );
 }
 
 sub objects {
-	carp __PACKAGE__ . '::objects is depreciated - use ::get instead!';
-    $_[0]->graph->get( @_ ); 
+	carp __PACKAGE__ . '::objects is depreciated - use ::rel instead!';
+    $_[0]->graph->rel( @_ ); 
 }
 
 1;

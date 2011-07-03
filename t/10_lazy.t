@@ -69,7 +69,7 @@ $parser->parse_into_model( $base, join('',<DATA>), $model );
 $graph = RDF::Lazy->new( namespaces => $map, model => $model );
 
 my $obj = [ map { "$_" }
-    $graph->get( iri('http://example.org/alice'), 'foaf_knows' ) ];
+    $graph->rel( iri('http://example.org/alice'), 'foaf_knows' ) ];
 
 is_deeply( $obj, ['http://example.org/bob'], 'resource object');
  

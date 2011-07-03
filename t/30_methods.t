@@ -27,7 +27,7 @@ ok( $a->type('foaf:Person','foaf:Organization'), 'a faof:Person' );
 # TODO: ->types / ->type_
 
 ok( $a->foaf_knows );
-# ok( $b->rel('foaf:knows') ); # $a
+# ok( $b->rev('foaf:knows') ); # $a
 
 done_testing;
 

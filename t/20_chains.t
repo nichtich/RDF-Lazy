@@ -23,8 +23,8 @@ my $a = $g->resource('http://example.org/alice');
 my $b = $g->resource('http://example.org/bob');
 
 is( $a->foaf_knows->str, "$b", 'alice knows bob' );
-is( $a->get('foaf_knows')->str, "$b", 'alice knows bob' );
-is( $a->get('foaf:knows')->str, "$b", 'alice knows bob' );
+is( $a->rel('foaf_knows')->str, "$b", 'alice knows bob' );
+is( $a->rel('foaf:knows')->str, "$b", 'alice knows bob' );
 
 done_testing;
 

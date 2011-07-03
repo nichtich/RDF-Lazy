@@ -44,10 +44,10 @@ sub model { $_[0]->{model} }
 
 sub objects {
 	carp __PACKAGE__ . '::objects is depreciated - use ::get instead!';
-	get ( @_ );
+	rel( @_ );
 }
 
-sub get_ { # TODO: merge with sub get
+sub rels { # TODO: merge with sub rel
     my ($self,$subject,$property,@filter) = @_;
 
     $subject = $self->node($subject)
@@ -70,7 +70,7 @@ sub get_ { # TODO: merge with sub get
     return;
 }
 
-sub get {
+sub rel {
     my $self     = shift;
     my $subject  = shift;
     my $property = shift; # mandatory
@@ -103,13 +103,16 @@ sub get {
     return;
 }
 
-sub rel {
-    # TODO
-}
-
-sub rel_ {
+sub rev {
     croak 'not implemented yet';
 }
+
+sub revs {
+    croak 'not implemented yet';
+}
+
+*rel_ = *rels;
+*rev_ = *revs;
 
 sub turtle { # FIXME
     my $self     = shift;
@@ -127,6 +130,8 @@ sub turtle { # FIXME
 
     return '<pre class="turtle">'.$html.'</pre>';
 }
+
+*ttl = *turtle;
 
 sub resource { RDF::Lazy::Resource->new( @_ ) }
 sub literal  { RDF::Lazy::Literal->new( @_ ) }
@@ -216,6 +221,20 @@ sub AUTOLOAD {
 
 __END__
 
+=head1 SYNOPSIS
+
+  $x->rel('foaf:knows');  # a person that $x knows
+  $x->rev('foaf:knows');  # a person known by $x
+  
+  $x->rels('foaf:knows'); # all people that $x knows
+  $x->rel_('foaf:knows'); # dito
+
+  $x->revs('foaf:knows'); # all people known by $x
+  $x->rev_('foaf:knows'); # dito
+
+  $x->foaf_knows;         # short form of $x->rel('foaf:knows')
+  $x->foaf_knows_;        # short form of $x->rels('foaf:knows')
+
 =method resource
 =method literal
 =method blank
@@ -234,12 +253,13 @@ method, so the following statements are equivalent:
     $graph->alice;
     $graph->node('alice');
 
-=method get ( $subject, $property [, @filters ] )
+=method rel ( $subject, $property [, @filters ] )
 
 Returns a list of objects that occur in statements in this graph. The full
 functionality of this method is not fixed yet.
 
 =method turtle ( [ $node ] )
+=method ttl ( [ $node ] )
 
 Returns an HTML escaped RDF/Turtle representation of a node's bounded 
 connections (not fully implemented yet).
