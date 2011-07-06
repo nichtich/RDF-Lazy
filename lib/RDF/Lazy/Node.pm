@@ -18,7 +18,6 @@ use RDF::Trine qw(iri);
 use Carp qw(carp);
 
 our $AUTOLOAD;
-# TODO: rdfs???
 our $rdf_type = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 
 sub trine { shift->[0]; }
@@ -214,14 +213,15 @@ In addition for resource nodes:
 
 ...
 
-=item objects
+=item rel
 
 Any other method name is used to query objects. The following three statements
 are equivalent:
 
+    $x->rel('foaf:name');
+    $x->graph->rel( $x, 'foaf_name' );
+    $x->rel('foaf_name');
     $x->foaf_name;
-    $x->objects('foaf_name');
-    $x->graph->objects( $x, 'foaf_name' );
 
 =back
 

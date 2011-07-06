@@ -82,71 +82,65 @@ sub objects {
 	rel( @_ );
 }
 
-sub rels { # TODO: merge with sub rel
-    my ($self,$subject,$property,@filter) = @_;
+sub _query {
+    my ($self,$all,$dir,$subject,$property,@filter) = @_;
 
     $subject = $self->node($subject)
         unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
 
-    my $predicate = $self->node($property);
+    $property = $self->node($property) if defined $property;
+    $property = $property->trine if defined $property;
 
-    if (defined $predicate) {
-        my @objects = $self->{model}->objects( $subject->trine, $predicate->trine );
+    my @res;
 
-        @objects = map { $self->node( $_ ) } @objects;
+    if ($dir eq 'rel') {
+	    @res = $self->{model}->objects( $subject->trine, $property );
+	} elsif ($dir eq 'rev') {
+	    @res = $self->{model}->subjects( $property, $subject->trine );
+	}
 
-        # TODO apply filters one by one and return in order of filters
-        @objects = grep { $_->is(@filter) } @objects
-            if @filter;
+	@res = map { $self->node( $_ ) } @res;
 
-        return \@objects if @objects;
-    }
+	# TODO apply filters one by one and return in order of filters
+	@res = grep { $_->is(@filter) } @res if @filter;
 
-    return;
+	return $all ? \@res : $res[0];
 }
 
-sub rel {
-    my $self     = shift;
-    my $subject  = shift;
-    my $property = shift; # mandatory
-    my @filter   = @_;
+sub _relrev {
+	my $self    = shift;
+	my $all     = shift;
+	my $type    = shift;
+	my $subject = shift;
 
-    $subject = $self->node($subject)
+	if (@_) {
+	    # get objects / subjects
+        my ($property,@filter) = @_;
+		$all = 1 if ($property and not ref $property and $property =~ s/^(.+[^_])_$/$1/);
+        return $self->_query( $all, $type, $subject, $property, @filter );
+	} else { 
+	    # get all predicates
+	    $subject = $self->node($subject)
         unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
 
-    my $all = ($property =~ s/^(.+[^_])_$/$1/) ? 1 : 0;
-    my $predicate = $self->node($property);
+		my @res;
 
-    if (defined $predicate) {
-        my @objects = $self->{model}->objects( $subject->trine, $predicate->trine );
+	    if ($type eq 'rel') {
+		    @res = $self->{model}->predicates( $subject->trine, undef );
+		} elsif ($type eq 'rev') {
+		    @res = $self->{model}->predicates( undef, $subject->trine );
+		}
 
-        @objects = map { $self->node( $_ ) } @objects;
-
-        # TODO apply filters one by one and return in order of filters
-        @objects = grep { $_->is(@filter) } @objects
-            if @filter;
-
-        return unless @objects;
-        
-        if ($all) {
-           return \@objects;
-        } else {   
-           return $objects[0];
-        }
-    }
-
-    return;
+		return $all ? [ map { $self->node( $_ ) } @res ] : $self->node( $res[0] );
+	}
 }
 
-sub rev {
-    croak 'not implemented yet';
-}
+sub rels { shift->_relrev( 1, 'rel', @_  ); }
+sub rel  { shift->_relrev( 0, 'rel', @_  ); }
+sub rev  { shift->_relrev( 0, 'rev', @_  ); }
+sub revs { shift->_relrev( 1, 'rev', @_  ); }
 
-sub revs {
-    croak 'not implemented yet';
-}
-
-*rel_ = *rels;
+*rel_ = *rels; # needed?
 *rev_ = *revs;
 
 sub turtle { # FIXME
@@ -161,12 +155,18 @@ sub turtle { # FIXME
 
     my $iterator = $self->{model}->bounded_description( $subject->trine );
     my $turtle   = $serializer->serialize_iterator_to_string( $iterator );
-    my $html     = escapeHTML( '# '.$subject->str."\n$turtle" );
 
-    return '<pre class="turtle">'.$html.'</pre>';
+    return $turtle;
 }
 
 *ttl = *turtle;
+
+sub ttlpre {
+    my ($self,$node) = @_;
+    '<pre class="turtle">' . escapeHTML(
+		"# $node\n" .$self->turtle($node)
+	) . '</pre>';
+}
 
 sub resource { RDF::Lazy::Resource->new( @_ ) }
 sub literal  { RDF::Lazy::Literal->new( @_ ) }
@@ -270,6 +270,9 @@ __END__
   $x->foaf_knows;         # short form of $x->rel('foaf:knows')
   $x->foaf_knows_;        # short form of $x->rels('foaf:knows')
 
+  $x->type;               # same as $x->rel('rdf:type')
+  $x->types;              # same as $x->rels('rdf:type')
+
 =method resource
 =method literal
 =method blank
@@ -296,8 +299,11 @@ functionality of this method is not fixed yet.
 =method turtle ( [ $node ] )
 =method ttl ( [ $node ] )
 
-Returns an HTML escaped RDF/Turtle representation of a node's bounded 
-connections (not fully implemented yet).
+Returns a RDF/Turtle representation of a node's bounded description.
+
+=method ttlpre ( [ $node ] )
+
+Returns an HTML escaped RDF/Turtle representation of a node's bounded description.
 
 =method dump ( [ $node ] )
 
