@@ -85,7 +85,7 @@ is $graph->node('alice')->uri, 'http://example.org/alice';
 is $graph->bob->foaf_name->str, 'Bob', 'chaining accesors';
 
 is $graph->foaf_name->uri, 'http://xmlns.com/foaf/0.1/name', 'namespace URI';
-is $graph->foaf__name->uri, 'http://example.org/foaf_name', 'non-namespace URI';
+is $graph->foaf_foo_bar->uri, 'http://xmlns.com/foaf/0.1/foo_bar', 'namespace URI with _';
 
 $graph->add( statement(
   iri('http://example.org/alice'),

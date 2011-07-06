@@ -25,52 +25,72 @@ our $AUTOLOAD;
 
 sub new {
 	my $class = shift;
-	my ($rdf, %arg) = (@_ % 2) ? @_ : (undef,@_);
+	my ($rdf, %args) = (@_ % 2) ? @_ : (undef,@_);
+    $rdf = $args{model} if defined $args{model};	
 
-    my $namespaces = $arg{namespaces} || RDF::Trine::NamespaceMap->new;
+    my $namespaces = $args{namespaces} || RDF::Trine::NamespaceMap->new;
     $namespaces = RDF::Trine::NamespaceMap->new( $namespaces ) unless 
 		blessed($namespaces) and $namespaces->isa('RDF::Trine::NamespaceMap');
 
-    my $model;
-    if (defined $rdf) {
-	    if (blessed $rdf) {
-	        if ($rdf->isa('RDF::Trine::Graph')) {
-				# we could use $rdf->{model} instead but not sure if we want
-				$rdf = $rdf->get_statements; # by value
-			}
-		    if ($rdf->isa('RDF::Trine::Model')) {
-			    $model = $rdf; # by reference
-	        } elsif ($rdf->isa('RDF::Trine::Store')) {
-		        $model = RDF::Trine::Model->new($rdf); # by reference
-			} elsif ($rdf->isa('RDF::Trine::Iterator::Graph')) { 
-		        $model = RDF::Trine::Model->temporary_model;
-				$model->begin_bulk_ops;
-				while (my $row = $rdf->next) { 
-					$model->add_statement( $row ); # by value
-				}
-				$model->end_bulk_ops;
-	        } elsif ($rdf->isa('RDF::Trine::Statement')) {
-		        $model = RDF::Trine::Model->temporary_model;
-				$model->add_statement( $rdf ); # by value
-			}
-        } else {
-			# TODO: parse from file, glob, or string
-	        $model = RDF::Trine::Model->temporary_model;
-			my $format = $arg{format} || 'turtle';
-			my $base   = $arg{base} || 'http://localhost/';
-			my $parser = RDF::Trine::Parser->new( $format );
-			$parser->parse_into_model( $base, $rdf, $model );
-        }
-		croak __PACKAGE__ . '::new got unknown rdf source' unless $model;
-	} else {
-		# TODO: use general parameter 'rdf' or 'data' instead of 'model'?
-        $model = $arg{model} || RDF::Trine::Model->new;
-	}
-
-    bless {
+    my $self = bless {
         namespaces => $namespaces,
-        model      => $model
     }, $class;
+
+	$self->parse( $rdf, %args );
+
+    $self;
+}
+
+# method includes parts of RDF::TrineShortcuts::rdf_parse by Toby Inkster
+sub parse {
+	my ($self,$rdf,%args) = @_;
+
+    my $model = $args{model} || RDF::Trine::Model->new;
+
+	# TODO: have a look at RDF::TrineShortcuts::rdf_parse
+
+	if (not defined $rdf) {
+		# empty model
+	} elsif (blessed $rdf) {
+		if ($rdf->isa('RDF::Trine::Graph')) {
+			# we could use $rdf->{model} instead but not sure if we want
+			$rdf = $rdf->get_statements; # by value
+		}
+		if ($rdf->isa('RDF::Trine::Model')) {
+			$model = $rdf; # by reference
+		} elsif ($rdf->isa('RDF::Trine::Store')) {
+			$model = RDF::Trine::Model->new($rdf); # by reference
+		} elsif ($rdf->isa('RDF::Trine::Iterator::Graph')) { 
+			$model = RDF::Trine::Model->temporary_model;
+			$model->begin_bulk_ops;
+			while (my $row = $rdf->next) { 
+				$model->add_statement( $row ); # by value
+			}
+			$model->end_bulk_ops;
+		} elsif ($rdf->isa('RDF::Trine::Statement')) {
+			$model = RDF::Trine::Model->temporary_model;
+			$model->add_statement( $rdf ); # by value
+		}
+	} elsif ( ref $rdf and ref $rdf eq 'HASH' ) {
+		$model->add_hashref($rdf);
+	} else {
+		# TODO: parse from file, glob, or string
+		# reuse namespaces if parsing Turtle or SPARQL
+
+		$model = RDF::Trine::Model->temporary_model;
+		my $format = $args{format} || 'turtle';
+		my $base   = $args{base} || 'http://localhost/';
+		my $parser = RDF::Trine::Parser->new( $format );
+		$parser->parse_into_model( $base, $rdf, $model );
+	}
+	croak __PACKAGE__ . '::new got unknown rdf source' unless $model;
+
+	$self->{model} = $model;
+}
+
+sub query {
+	# See RDF::TrineShortcuts::rdf_query
+	carp __PACKAGE__ . '::query not implemented yet';
 }
 
 sub model { $_[0]->{model} }
@@ -184,7 +204,6 @@ sub node {
             ($prefix,$local) = ($1,$2);
 		} elsif ( $name =~ /^(([^_:]*)_)?([^_:]+.*)$/ ) {
             ($prefix,$local) = ($2,$3);
-            $local =~ s/__/_/g;
 	    } else {
 			return;
 		}
@@ -247,7 +266,7 @@ sub AUTOLOAD {
     my $name = $AUTOLOAD;
     $name =~ s/.*:://;
 
-    return if $name =~ /^(uri|query|sparql|model)$/; # reserved words
+    return if $name =~ /^(uri|query|sparql)$/; # reserved words
 
     return $self->node($name);
 }
@@ -311,5 +330,9 @@ Returns an HTML representation of a selected node and its connections or of
 the full graph (not implemented yet).
 
 =back
+
+=head1 SEE ALSO
+
+L<RDF::TrineShortcuts> provides some overlap with RDF::Lazy. 
 
 =cut
