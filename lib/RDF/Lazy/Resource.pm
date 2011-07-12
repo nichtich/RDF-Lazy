@@ -32,10 +32,7 @@ sub href {
     escapeHTML(shift->trine->uri_value); 
 }
 
-sub eq { 
-    my ($a,$b) = @_; 
-	"$a" eq "$b"; 
-}
+sub eq { "$_[0]" eq "$_[1]"; } 
 
 *esc = *href;
 *str = *uri;

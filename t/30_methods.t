@@ -18,7 +18,7 @@ my $g = RDF::Lazy->new(
 	model => $model,
 );
 
-my $a = $g->resource('http://example.org/alice');
+my $a = $g->uri('<http://example.org/alice>');
 my $b = $g->resource('http://example.org/bob');
 my $c = $g->resource('http://example.org/claire');
 my $d = $g->resource('http://example.org/dave');
@@ -30,6 +30,9 @@ my $x = $g->blank;
 ok( $x->id, 'blank node' );
 $x = $g->blank('foo');
 is( $x->id, 'foo', 'blank node' );
+
+my $y = $g->uri('_:foo');
+is( $x, $y, 'another blank' );
 
 # type
 is( $a->type, $g->foaf_Person, 'type eq' );
@@ -60,6 +63,10 @@ list_is( $p->revs, [qw(rdf:type)], 'revs (1)' );
 list_is( $d->revs, [qw(foaf:knows)], 'revs (1)' );
 
 # TODO: test ->rev_ and rev(foaf_knows_)
+
+$g = RDF::Lazy->new( namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } );
+$g->add( "<http://example.org/foo>", "foaf:knows", "<http://example.org/baz>" );
+like( $g->ttl, qr{<http://example.org/foo> foaf:knows <http://example.org/baz> .}, 'added triple' );
 
 done_testing;
 

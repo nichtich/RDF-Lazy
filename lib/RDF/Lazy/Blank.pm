@@ -5,6 +5,8 @@ package RDF::Lazy::Blank;
 
 use base 'RDF::Lazy::Node';
 
+use overload '""' => \&str, 'eq' => \&eq;
+
 sub new {
     my $class = shift;
     my $graph = shift || RDF::Lazy::Node::Graph->new;
@@ -25,5 +27,7 @@ sub str {
 	# TODO: check whether non-XML characters are possible for esc
     '_:'.shift->trine->blank_identifier
 }
+
+sub eq { $_[0]->id eq $_[1]->id; }
 
 1;

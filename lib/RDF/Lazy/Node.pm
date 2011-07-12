@@ -95,6 +95,8 @@ sub objects {
     $_[0]->graph->rel( @_ ); 
 }
 
+sub eq { "$_[0]" eq "$_[1]"; } 
+
 1;
 
 =head1 USAGE

@@ -31,55 +31,77 @@ sub new {
     $self;
 }
 
-# method includes parts of RDF::TrineShortcuts::rdf_parse by Toby Inkster
 sub parse {
 	my ($self,$rdf,%args) = @_;
 
     my $model = $args{model} || RDF::Trine::Model->new;
 
+	# This is not fully transaction save!
+	$self->{model} = $model;
+
+	if (blessed $rdf) {
+		if ($rdf->isa('RDF::Trine::Model')) {
+			return; # model added by reference
+		} elsif ($rdf->isa('RDF::Trine::Store')) {
+			$self->{model} = RDF::Trine::Model->new($rdf); 
+			return; # model added by reference
+		}
+	}
+
+	$self->add( $rdf, %args );
+}
+
+# method includes parts of RDF::TrineShortcuts::rdf_parse by Toby Inkster
+sub add { # rdf by value
+	my $self = shift;
+
 	# TODO: have a look at RDF::TrineShortcuts::rdf_parse
 
-	if (not defined $rdf) {
-		# empty model
-	} elsif (blessed $rdf) {
-		if ($rdf->isa('RDF::Trine::Graph')) {
-			# we could use $rdf->{model} instead but not sure if we want
+    if (@_ == 3 and $_[1] !~ /^[a-z]+$/) { # TODO: allow 'a'?
+		my @triple = @_; 
+		@triple = map { $self->uri($_) } @triple;
+		unless ( grep { not defined $_ } @triple ) {
+			@triple = map { $_->trine } @triple;
+			my $stm = RDF::Trine::Statement->new( @triple );
+			$self->model->add_statement( $stm );
+		}
+		return;
+	}
+
+    my ($rdf, %args) = @_;
+
+	if (blessed $rdf) {
+	    if ($rdf->isa('RDF::Trine::Graph')) {
 			$rdf = $rdf->get_statements; # by value
 		}
-		if ($rdf->isa('RDF::Trine::Model')) {
-			$model = $rdf; # by reference
-		} elsif ($rdf->isa('RDF::Trine::Store')) {
-			$model = RDF::Trine::Model->new($rdf); # by reference
-		} elsif ($rdf->isa('RDF::Trine::Iterator::Graph')) { 
-			$model = RDF::Trine::Model->temporary_model;
-			$model->begin_bulk_ops;
+		if ($rdf->isa('RDF::Trine::Iterator::Graph')) { 
+			$self->model->begin_bulk_ops;
 			while (my $row = $rdf->next) { 
-				$model->add_statement( $row ); # by value
+				$self->model->add_statement( $row );
 			}
-			$model->end_bulk_ops;
+			$self->model->end_bulk_ops;
 		} elsif ($rdf->isa('RDF::Trine::Statement')) {
-			$model = RDF::Trine::Model->temporary_model;
-			$model->add_statement( $rdf ); # by value
+			$self->model->add_statement( $rdf );
+        } elsif ($rdf->isa('RDF::Trine::Model')) {
+        	$self->add( $rdf->as_stream );
+		} else {
+			croak 'Cannot add RDF object of type ' . ref($rdf);
 		}
 	} elsif ( ref $rdf and ref $rdf eq 'HASH' ) {
-		$model->add_hashref($rdf);
+		$self->model->add_hashref($rdf);
 	} else {
-		# TODO: parse from file, glob, or string
+		# TODO: parse from file, glob, or string in Turtle syntax or other
 		# reuse namespaces if parsing Turtle or SPARQL
 
-		$model = RDF::Trine::Model->temporary_model;
 		my $format = $args{format} || 'turtle';
 		my $base   = $args{base} || 'http://localhost/';
 		my $parser = RDF::Trine::Parser->new( $format );
-		$parser->parse_into_model( $base, $rdf, $model );
+		$parser->parse_into_model( $base, $rdf, $self->model );
 	}
-	croak __PACKAGE__ . '::new got unknown rdf source' unless $model;
-
-	$self->{model} = $model;
 }
 
 sub query {
-	# See RDF::TrineShortcuts::rdf_query
+	# TODO: See RDF::TrineShortcuts::rdf_query
 	carp __PACKAGE__ . '::query not implemented yet';
 }
 
@@ -93,6 +115,117 @@ sub objects {
 	carp __PACKAGE__ . '::objects is depreciated - use ::get instead!';
 	rel( @_ );
 }
+
+
+sub rels { shift->_relrev( 1, 'rel', @_  ); }
+sub rel  { shift->_relrev( 0, 'rel', @_  ); }
+sub rev  { shift->_relrev( 0, 'rev', @_  ); }
+sub revs { shift->_relrev( 1, 'rev', @_  ); }
+
+*rel_ = *rels; # needed?
+*rev_ = *revs;
+
+sub turtle {
+    my $self     = shift;
+    my $subject  = shift;
+  
+    use RDF::Trine::Serializer::Turtle;
+    my $serializer = RDF::Trine::Serializer::Turtle->new( namespaces => $self->{namespaces} );
+
+	my $iterator;
+
+	if ($subject) {
+	    $subject = $self->uri($subject)
+    	    unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
+    	$iterator = $self->{model}->bounded_description( $subject->trine );
+	} else {
+		$iterator = $self->model->as_stream;
+	}
+
+    return $serializer->serialize_iterator_to_string( $iterator );
+}
+
+*ttl = *turtle;
+
+sub ttlpre {
+    my ($self,$node) = @_;
+    '<pre class="turtle">' . escapeHTML(
+		"# $node\n" .$self->turtle($node)
+	) . '</pre>';
+}
+
+sub resource { RDF::Lazy::Resource->new( @_ ) }
+sub literal  { RDF::Lazy::Literal->new( @_ ) }
+sub blank    { RDF::Lazy::Blank->new( @_ ) }
+
+sub node {
+	carp __PACKAGE__ . '::node is depreciated - use ::uri instead!';
+	uri(@_);
+}
+
+sub uri {
+    my ($self,$node) = @_;
+    return unless defined $node;
+
+	if (blessed $node) {
+   		if ($node->isa('RDF::Lazy::Node')) {
+			$node = $self->uri( $node->trine ); # copy from another graph
+		}
+	    if ($node->isa('RDF::Trine::Node::Resource')) {
+		    return $self->resource( $node );
+        } elsif ($node->isa('RDF::Trine::Node::Literal')) {
+   		 	return $self->literal( $node );
+		} elsif ($node->isa('RDF::Trine::Node::Blank')) {
+	    	return $self->blank( $node );
+		} else {
+			carp 'Cannot create RDF::Lazy::Node from '.ref($node);
+			return;
+		}
+	}
+
+	my ($prefix,$local,$uri);
+
+	if ( $node =~ /^<(.*)>$/ ) {
+		return $self->resource($1);
+	} elsif ( $node =~ /^_:(.*)$/ ) {
+		return $self->blank( $1 );
+	} elsif ( $node =~ /^\[\s*\]$/ ) {
+		return $self->blank;
+	} elsif ( $node =~ /^["'](.*)["']?$/ ) {
+		carp "literal uris not supported yet";
+		return;
+	} elsif ( $node =~ /^([^:]*):([^:]*)$/ ) {
+		($prefix,$local) = ($1,$2);
+	} elsif ( $node =~ /^(([^_:]*)_)?([^_:]+.*)$/ ) {
+		($prefix,$local) = ($2,$3);
+	} else {
+		return;
+	}
+
+	if (defined $prefix) {
+		$uri = $self->{namespaces}->uri("$prefix:$local");
+	} else {
+		# TODO: Fix bug in RDF::Trine::NamespaceMap, line 133
+		# $predicate = $self->{namespaces}->uri(":$local");
+		my $ns = $self->{namespaces}->namesespace_uri("");
+		$uri = $ns->uri($local) if defined $ns;
+	}
+
+	return unless defined $uri; 
+	return $self->resource( $uri );
+}
+
+sub AUTOLOAD {
+    my $self = shift;
+    return if !ref($self) or $AUTOLOAD =~ /^(.+::)?DESTROY$/;
+
+    my $name = $AUTOLOAD;
+    $name =~ s/.*:://;
+
+    return $self->uri($name);
+}
+
+### internal methods
 
 sub _query {
     my ($self,$all,$dir,$subject,$property,@filter) = @_;
@@ -145,127 +278,6 @@ sub _relrev {
 
 		return $all ? [ map { $self->uri( $_ ) } @res ] : $self->uri( $res[0] );
 	}
-}
-
-sub rels { shift->_relrev( 1, 'rel', @_  ); }
-sub rel  { shift->_relrev( 0, 'rel', @_  ); }
-sub rev  { shift->_relrev( 0, 'rev', @_  ); }
-sub revs { shift->_relrev( 1, 'rev', @_  ); }
-
-*rel_ = *rels; # needed?
-*rev_ = *revs;
-
-sub turtle { # FIXME
-    my $self     = shift;
-    my $subject  = shift;
-
-    $subject = $self->uri($subject)
-        unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
-   
-    use RDF::Trine::Serializer::Turtle;
-    my $serializer = RDF::Trine::Serializer::Turtle->new( namespaces => $self->{namespaces} );
-
-    my $iterator = $self->{model}->bounded_description( $subject->trine );
-    my $turtle   = $serializer->serialize_iterator_to_string( $iterator );
-
-    return $turtle;
-}
-
-*ttl = *turtle;
-
-sub ttlpre {
-    my ($self,$node) = @_;
-    '<pre class="turtle">' . escapeHTML(
-		"# $node\n" .$self->turtle($node)
-	) . '</pre>';
-}
-
-sub resource { RDF::Lazy::Resource->new( @_ ) }
-sub literal  { RDF::Lazy::Literal->new( @_ ) }
-sub blank    { RDF::Lazy::Blank->new( @_ ) }
-
-sub node {
-	carp __PACKAGE__ . '::node is depreciated - use ::uri instead!';
-	uri(@_);
-}
-
-sub uri {
-    my $self = shift;
-
-    if (!UNIVERSAL::isa( $_[0], 'RDF::Trine::Node' )) {
-        my $name = shift;
-        return unless defined $name;
-		my ($prefix,$local,$uri);
-
-	    if ( $name =~ /^([^:]*):([^:]*)$/ ) {
-            ($prefix,$local) = ($1,$2);
-		} elsif ( $name =~ /^(([^_:]*)_)?([^_:]+.*)$/ ) {
-            ($prefix,$local) = ($2,$3);
-	    } else {
-			return;
-		}
-
-        if (defined $prefix) {
-            $uri = $self->{namespaces}->uri("$prefix:$local");
-        } else {
-            # TODO: Fix bug in RDF::Trine::NamespaceMap, line 133
-            # $predicate = $self->{namespaces}->uri(":$local");
-            my $ns = $self->{namespaces}->namespace_uri("");
-            $uri = $ns->uri($local) if defined $ns;
-        }
-
-        return unless defined $uri; 
-        @_ = ($uri);
-    }
-
-    return $self->resource( @_ )
-        if UNIVERSAL::isa( $_[0], 'RDF::Trine::Node::Resource' ); 
-
-    return $self->literal( @_ )
-        if UNIVERSAL::isa( $_[0], 'RDF::Trine::Node::Literal' );
-
-    return $self->blank( @_ )
-        if UNIVERSAL::isa( $_[0], 'RDF::Trine::Node::Blank' );
-
-    return;
-}
-
-sub add {
-    my ($self, $add) = @_;
-    
-    if (UNIVERSAL::isa($add, 'RDF::Trine::Statement')) {
-        $self->model->add_statement( $add );
-    } elsif (UNIVERSAL::isa($add, 'RDF::Trine::Iterator')) {
-        _add_iterator( $self->model, $add ); 
-    } elsif (UNIVERSAL::isa($add, 'RDF::Trine::Model')) {
-        $self->add( $add->as_stream ); # TODO: test this
-    }
-
-    # TODO: parse and add in Turtle syntax
-
-    # TODO: add triple with subject, predicate in custom form and object
-    # as custom form, blank, or literal
-}
-
-# Is there no RDF::Trine::Model::add_iterator ??
-sub _add_iterator {
-    my ($model, $iter) = @_;
-    
-    $model->begin_bulk_ops;
-    while (my $st = $iter->next) { 
-        $model->add_statement( $st ); 
-    }
-    $model->end_bulk_ops;
-}
-
-sub AUTOLOAD {
-    my $self = shift;
-    return if !ref($self) or $AUTOLOAD =~ /^(.+::)?DESTROY$/;
-
-    my $name = $AUTOLOAD;
-    $name =~ s/.*:://;
-
-    return $self->uri($name);
 }
 
 1;

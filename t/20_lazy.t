@@ -59,7 +59,7 @@ is $graph->resource('http://example.com/"')->uri, $uri->uri, 'construct via ->re
 
 my $map  = RDF::Trine::NamespaceMap->new({
   foaf => iri('http://xmlns.com/foaf/0.1/'),
-  ''   => iri('http://example.org/')
+  'x'   => iri('http://example.org/') # empty (default) prefix not supported?
 });
 my $base = 'http://example.org/';
 my $model = RDF::Trine::Model->new;
@@ -81,8 +81,8 @@ is_deeply( "$obj", 'Alice', 'literal object');
 $obj = $a->zonk;
 is_deeply( "$obj", 'foo', 'property with default namespace');
 
-is $graph->uri('alice')->uri, 'http://example.org/alice';
-is $graph->bob->foaf_name->str, 'Bob', 'chaining accesors';
+is $graph->uri('x:alice')->uri, 'http://example.org/alice';
+is $graph->x_bob->foaf_name->str, 'Bob', 'chaining accesors';
 
 is $graph->foaf_name->uri, 'http://xmlns.com/foaf/0.1/name', 'namespace URI';
 is $graph->foaf_foo_bar->uri, 'http://xmlns.com/foaf/0.1/foo_bar', 'namespace URI with _';
