@@ -4,9 +4,28 @@ use warnings;
 use Test::More;
 use RDF::Lazy;
 
-my $rdf = RDF::Lazy->new(join('',<DATA>));
+my $data = join('',<DATA>);
 
-is( $rdf->size, 4 );
+my $rdf = RDF::Lazy->new($data);
+is( $rdf->size, 4, 'rdf data as first parameter' );
+
+$rdf = RDF::Lazy->new( rdf => $data );
+is( "$rdf", "4 triples", 'rdf data with named parameter' );
+
+my $s = $rdf->uri('"hello"');
+is( $s->str, "hello", 'parse plain literal' );
+
+$s = $rdf->uri('"hello"@en');
+is( $s->lang, "en", 'parse literal with language' );
+
+$s = $rdf->uri('true');
+is( $s->str, "true", 'parse plain true' );
+
+# ...
+
+
+# Turtle
+like ( $rdf->ttlpre, qr/^<pre/ );
 
 done_testing;
 

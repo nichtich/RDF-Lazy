@@ -66,7 +66,7 @@ my $model = RDF::Trine::Model->new;
 my $parser = RDF::Trine::Parser->new('turtle');
 $parser->parse_into_model( $base, join('',<DATA>), $model );
 
-$graph = RDF::Lazy->new( namespaces => $map, model => $model );
+$graph = RDF::Lazy->new( namespaces => $map, rdf => $model );
 
 my $obj = [ map { "$_" }
     	$graph->rel( iri('http://example.org/alice'), 'foaf_knows' ) 

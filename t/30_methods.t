@@ -10,12 +10,12 @@ my $parser = RDF::Trine::Parser->new('turtle');
 $parser->parse_into_model( 'http://example.org/', join('',<DATA>), $model );
 
 my $g = RDF::Lazy->new( 
+	rdf => $model,
 	namespaces => { 
 		foaf => 'http://xmlns.com/foaf/0.1/',
 		rdf  => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
 		x    => 'http://example.org/',
 	},
-	model => $model,
 );
 
 my $a = $g->uri('<http://example.org/alice>');

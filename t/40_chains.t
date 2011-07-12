@@ -14,8 +14,7 @@ my $model = RDF::Trine::Model->new;
 my $parser = RDF::Trine::Parser->new('turtle');
 $parser->parse_into_model( $base, join('',<DATA>), $model );
 
-my $g = RDF::Lazy->new( 
-	model => $model,
+my $g = RDF::Lazy->new( $model, 
 	namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' }
 );
 
@@ -25,6 +24,10 @@ my $b = $g->resource('http://example.org/bob');
 is( $a->foaf_knows->str, "$b", 'alice knows bob' );
 is( $a->rel('foaf_knows')->str, "$b", 'alice knows bob' );
 is( $a->rel('foaf:knows')->str, "$b", 'alice knows bob' );
+
+is( $model->size, 6, 'model used as reference' );
+$g = RDF::Lazy->new( $model, namespaces => $g->namespaces );
+is( $model->size, 6, 'model used as reference' );
 
 done_testing;
 

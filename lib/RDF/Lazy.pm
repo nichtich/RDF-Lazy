@@ -13,10 +13,16 @@ use Carp qw(carp croak);
 
 our $AUTOLOAD;
 
+use overload '""' => sub { shift->size . " triples"; };
+
 sub new {
 	my $class = shift;
 	my ($rdf, %args) = (@_ % 2) ? @_ : (undef,@_);
-    $rdf = $args{model} if defined $args{model};	
+
+    if (defined $args{rdf}) {
+        croak 'Either use first argument or ref => $rdf' if $rdf;
+        $rdf = $args{rdf};
+    }
 
     my $namespaces = $args{namespaces} || RDF::Trine::NamespaceMap->new;
     $namespaces = RDF::Trine::NamespaceMap->new( $namespaces ) unless 
@@ -26,29 +32,21 @@ sub new {
         namespaces => $namespaces,
     }, $class;
 
-	$self->parse( $rdf, %args );
-
-    $self;
-}
-
-sub parse {
-	my ($self,$rdf,%args) = @_;
-
-    my $model = $args{model} || RDF::Trine::Model->new;
-
-	# This is not fully transaction save!
-	$self->{model} = $model;
-
 	if (blessed $rdf) {
+        # add model by reference
 		if ($rdf->isa('RDF::Trine::Model')) {
-			return; # model added by reference
+			$self->{model} = $rdf; # model added by reference
 		} elsif ($rdf->isa('RDF::Trine::Store')) {
 			$self->{model} = RDF::Trine::Model->new($rdf); 
-			return; # model added by reference
 		}
 	}
 
-	$self->add( $rdf, %args );
+    if ( not $self->{model} ) {
+        $self->{model} = RDF::Trine::Model->new;
+    	$self->add( $rdf, %args );
+    }
+
+    $self;
 }
 
 # method includes parts of RDF::TrineShortcuts::rdf_parse by Toby Inkster
@@ -60,11 +58,12 @@ sub add { # rdf by value
     if (@_ == 3 and $_[1] !~ /^[a-z]+$/) { # TODO: allow 'a'?
 		my @triple = @_; 
 		@triple = map { $self->uri($_) } @triple;
-		unless ( grep { not defined $_ } @triple ) {
-			@triple = map { $_->trine } @triple;
-			my $stm = RDF::Trine::Statement->new( @triple );
-			$self->model->add_statement( $stm );
-		}
+		if ( grep { not defined $_ } @triple ) {
+            croak 'Failed to add pseudo-triple';
+        }
+		@triple = map { $_->trine } @triple;
+		my $stm = RDF::Trine::Statement->new( @triple );
+		$self->model->add_statement( $stm );
 		return;
 	}
 
@@ -87,8 +86,12 @@ sub add { # rdf by value
 		} else {
 			croak 'Cannot add RDF object of type ' . ref($rdf);
 		}
-	} elsif ( ref $rdf and ref $rdf eq 'HASH' ) {
-		$self->model->add_hashref($rdf);
+	} elsif ( ref $rdf ) {
+        if ( ref $rdf eq 'HASH' ) {
+    		$self->model->add_hashref($rdf);
+        } else {
+            croak 'Cannot add RDF object of type ' . ref($rdf);
+        }
 	} else {
 		# TODO: parse from file, glob, or string in Turtle syntax or other
 		# reuse namespaces if parsing Turtle or SPARQL
@@ -148,10 +151,9 @@ sub turtle {
 *ttl = *turtle;
 
 sub ttlpre {
-    my ($self,$node) = @_;
-    '<pre class="turtle">' . escapeHTML(
-		"# $node\n" .$self->turtle($node)
-	) . '</pre>';
+    return '<pre class="turtle">' 
+        . escapeHTML( "# $_[0]\n" . ttl(@_) ) 
+        . '</pre>';
 }
 
 sub resource { RDF::Lazy::Resource->new( @_ ) }
@@ -191,9 +193,8 @@ sub uri {
 		return $self->blank( $1 );
 	} elsif ( $node =~ /^\[\s*\]$/ ) {
 		return $self->blank;
-	} elsif ( $node =~ /^["'](.*)["']?$/ ) {
-		carp "literal uris not supported yet";
-		return;
+	} elsif ( $node =~ /^["'+-0-9]|^(true|false)$/ ) {
+        return $self->_literal( $node );
 	} elsif ( $node =~ /^([^:]*):([^:]*)$/ ) {
 		($prefix,$local) = ($1,$2);
 	} elsif ( $node =~ /^(([^_:]*)_)?([^_:]+.*)$/ ) {
@@ -215,6 +216,10 @@ sub uri {
 	return $self->resource( $uri );
 }
 
+sub namespaces {
+    return shift->{namespaces};
+}
+
 sub AUTOLOAD {
     my $self = shift;
     return if !ref($self) or $AUTOLOAD =~ /^(.+::)?DESTROY$/;
@@ -226,6 +231,40 @@ sub AUTOLOAD {
 }
 
 ### internal methods
+
+# parts from RDF/Trine/Parser/Turtle.pm
+my $xsd        = RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+#my $r_language = qr'[a-z]+(-[a-z0-9]+)*'i;
+my $r_double   = qr'^[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)$';
+my $r_decimal  = qr'^[+-]?([0-9]+\.[0-9]*|\.([0-9])+)$';
+my $r_integer  = qr'^[+-]?[0-9]+';
+my $r_boolean  = qr'^(true|false)$';
+my $r_string1  = qr'^"(.*)"(\@([a-z]+(-[a-z0-9]+)*))?$'i;
+my $r_string2  = qr'^"(.*)"(\@([a-z]+(-[a-z0-9]+)*))?$'i;
+
+sub _literal {
+    my ($self, $s) = @_;
+
+    my ($literal, $language, $datatype);
+
+    if ( $s =~ $r_string1 or $s =~ $r_string2 ) {
+        ($literal, $language) = ($1,$3);
+    } elsif( $s =~ $r_double ) {
+        $literal = $s;
+        $datatype = $xsd->double;
+    } elsif( $s =~ $r_decimal ) {
+        $literal = $s;
+        $datatype = $xsd->decimal;
+    } elsif( $s =~ $r_integer ) {
+        $literal = $s;
+        $datatype = $xsd->integer;
+    } elsif( $s =~ $r_boolean ) {
+        $literal = $s;
+        $datatype = $xsd->boolean;
+    } 
+    
+    return $self->literal( $literal, $language, $datatype );
+}
 
 sub _query {
     my ($self,$all,$dir,$subject,$property,@filter) = @_;
@@ -284,14 +323,6 @@ sub _relrev {
 
 __END__
 
-=head1 DESCRIPTION
-
-This module wraps L<RDF::Trine::Node> to provide simple node-centric access to
-RDF data. It was designed to access RDF within L<Template> Toolkit but it can
-also be used independently. Basically, an instance of RDF::Lazy contains an
-unlabeled RDF graph and a set of namespace prefix for lazy access. Each RDF 
-nodes (L<RDF::Lazy::Node>) is connected to its graph for lazy graph traversal.
-
 =head1 SYNOPSIS
 
   $g = RDF::Lazy->new(
@@ -303,9 +334,8 @@ nodes (L<RDF::Lazy::Node>) is connected to its graph for lazy graph traversal.
   $p = $f->uri('foaf:Person);                            # same but lazier
   $p = $f->foaf_Person;                                  # same but laziest
 
-
   $s = $g->label('Alice'); # creates a literal node
-  $s = $g->blank;
+  $s = $g->blank;          # creates a new blank node
 
   $x->rel('foaf:knows');   # a person that $x knows
   $x->rev('foaf:knows');   # a person known by $x
@@ -319,8 +349,19 @@ nodes (L<RDF::Lazy::Node>) is connected to its graph for lazy graph traversal.
   $x->foaf_knows;          # short form of $x->rel('foaf:knows')
   $x->foaf_knows_;         # short form of $x->rels('foaf:knows')
 
+  $x->rels;                # array reference with a list of properties
+  $x->revs;                # same as rels, but other direction
+
   $x->type;                # same as $x->rel('rdf:type')
   $x->types;               # same as $x->rels('rdf:type')
+
+=head1 DESCRIPTION
+
+This module wraps L<RDF::Trine::Node> to provide simple node-centric access to
+RDF data. It was designed to access RDF within L<Template> Toolkit but it can
+also be used independently. Basically, an instance of RDF::Lazy contains an
+unlabeled RDF graph and a set of namespace prefixes. For lazy access and graph
+traversal, each RDF node (L<RDF::Lazy::Node>) is tied to the graph.
 
 =method resource
 =method literal
@@ -337,32 +378,38 @@ contains a triple with the given node. You can either pass a name or an
 instance of L<RDF::Trine::Node>. This method is also called for any undefined
 method, so the following statements are equivalent:
 
-    $graph->alice;
-    $graph->uri('alice');
+    $graph->true;
+    $graph->uri('true');
 
 =method rel ( $subject, $property [, @filters ] )
 
 Returns a list of objects that occur in statements in this graph. The full
 functionality of this method is not fixed yet.
 
-=method turtle ( [ $node ] )
 =method ttl ( [ $node ] )
 
 Returns a RDF/Turtle representation of a node's bounded description.
 
 =method ttlpre ( [ $node ] )
 
-Returns an HTML escaped RDF/Turtle representation of a node's bounded description.
-
-=method dump ( [ $node ] )
-
-Returns an HTML representation of a selected node and its connections or of
-the full graph (not implemented yet).
+Returns an HTML escaped RDF/Turtle representation of a node's bounded 
+description, wrapped in a HTML pre element.
 
 =back
 
 =head1 SEE ALSO
 
-L<RDF::TrineShortcuts> provides some overlap with RDF::Lazy. 
+L<RDF::Helper> and L<RDF::TrineShortcuts> provide similar APIs.
+
+=head1 AUTHOR
+
+Jakob Voß <voss@gbv.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2011 by Jakob Voß.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
