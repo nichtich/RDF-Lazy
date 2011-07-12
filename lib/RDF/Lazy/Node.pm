@@ -43,7 +43,7 @@ sub type {
 	if ( @_ ) {
         my $types = $self->graph->rel_( $self, $rdf_type ); # TODO use filter?
 	    foreach ( @_ ) {
-			my $type = $self->graph->node( $_ );
+			my $type = $self->graph->uri( $_ );
 		    return 1 if (grep { $_ eq $type } @$types);
 		}
 		return 0;
@@ -114,7 +114,7 @@ However, the following syntax is equivalent:
 
 To convert a RDF::Trine::Node object into a RDF::Lazy::Node, you can use:
 
-    $graph->node( $trine_node )
+    $graph->uri( $trine_node )
 
 Note that all these methods silently return undef on failure.
 

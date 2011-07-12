@@ -3,16 +3,6 @@ use warnings;
 package RDF::Lazy;
 #ABSTRACT: Lazy typing access to RDF data
 
-=head1 DESCRIPTION
-
-This module wraps L<RDF::Trine::Node> to provide simple node-centric access to
-RDF data. It was designed to access RDF within L<Template> Toolkit but you can
-use it independently. Basically, L<RDF::Lazy> wraps an RDF graph that contains
-RDF nodes (L<RDF::Lazy::Node>). Each node knows its graph, so you can traverse 
-the graph starting from any node.
-
-=cut
-
 use RDF::Trine::Model;
 use RDF::Trine::NamespaceMap;
 use CGI qw(escapeHTML);
@@ -93,6 +83,8 @@ sub query {
 	carp __PACKAGE__ . '::query not implemented yet';
 }
 
+*sparql = *query;
+
 sub model { $_[0]->{model} }
 
 sub size { $_[0]->{model}->size }
@@ -105,10 +97,10 @@ sub objects {
 sub _query {
     my ($self,$all,$dir,$subject,$property,@filter) = @_;
 
-    $subject = $self->node($subject)
+    $subject = $self->uri($subject)
         unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
 
-    $property = $self->node($property) if defined $property;
+    $property = $self->uri($property) if defined $property;
     $property = $property->trine if defined $property;
 
     my @res;
@@ -119,7 +111,7 @@ sub _query {
 	    @res = $self->{model}->subjects( $property, $subject->trine );
 	}
 
-	@res = map { $self->node( $_ ) } @res;
+	@res = map { $self->uri( $_ ) } @res;
 
 	# TODO apply filters one by one and return in order of filters
 	@res = grep { $_->is(@filter) } @res if @filter;
@@ -140,7 +132,7 @@ sub _relrev {
         return $self->_query( $all, $type, $subject, $property, @filter );
 	} else { 
 	    # get all predicates
-	    $subject = $self->node($subject)
+	    $subject = $self->uri($subject)
         unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
 
 		my @res;
@@ -151,7 +143,7 @@ sub _relrev {
 		    @res = $self->{model}->predicates( undef, $subject->trine );
 		}
 
-		return $all ? [ map { $self->node( $_ ) } @res ] : $self->node( $res[0] );
+		return $all ? [ map { $self->uri( $_ ) } @res ] : $self->uri( $res[0] );
 	}
 }
 
@@ -167,7 +159,7 @@ sub turtle { # FIXME
     my $self     = shift;
     my $subject  = shift;
 
-    $subject = $self->node($subject)
+    $subject = $self->uri($subject)
         unless UNIVERSAL::isa( $subject, 'RDF::Lazy::Node' );
    
     use RDF::Trine::Serializer::Turtle;
@@ -193,6 +185,11 @@ sub literal  { RDF::Lazy::Literal->new( @_ ) }
 sub blank    { RDF::Lazy::Blank->new( @_ ) }
 
 sub node {
+	carp __PACKAGE__ . '::node is depreciated - use ::uri instead!';
+	uri(@_);
+}
+
+sub uri {
     my $self = shift;
 
     if (!UNIVERSAL::isa( $_[0], 'RDF::Trine::Node' )) {
@@ -244,6 +241,8 @@ sub add {
         $self->add( $add->as_stream ); # TODO: test this
     }
 
+    # TODO: parse and add in Turtle syntax
+
     # TODO: add triple with subject, predicate in custom form and object
     # as custom form, blank, or literal
 }
@@ -266,31 +265,50 @@ sub AUTOLOAD {
     my $name = $AUTOLOAD;
     $name =~ s/.*:://;
 
-    return if $name =~ /^(uri|query|sparql)$/; # reserved words
-
-    return $self->node($name);
+    return $self->uri($name);
 }
 
 1;
 
 __END__
 
+=head1 DESCRIPTION
+
+This module wraps L<RDF::Trine::Node> to provide simple node-centric access to
+RDF data. It was designed to access RDF within L<Template> Toolkit but it can
+also be used independently. Basically, an instance of RDF::Lazy contains an
+unlabeled RDF graph and a set of namespace prefix for lazy access. Each RDF 
+nodes (L<RDF::Lazy::Node>) is connected to its graph for lazy graph traversal.
+
 =head1 SYNOPSIS
 
-  $x->rel('foaf:knows');  # a person that $x knows
-  $x->rev('foaf:knows');  # a person known by $x
+  $g = RDF::Lazy->new(
+  	  model      => $model,
+  	  namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' }
+  );
+
+  $p = $f->resource('http://xmlns.com/foaf/0.1/Person'); # create node
+  $p = $f->uri('foaf:Person);                            # same but lazier
+  $p = $f->foaf_Person;                                  # same but laziest
+
+
+  $s = $g->label('Alice'); # creates a literal node
+  $s = $g->blank;
+
+  $x->rel('foaf:knows');   # a person that $x knows
+  $x->rev('foaf:knows');   # a person known by $x
   
-  $x->rels('foaf:knows'); # all people that $x knows
-  $x->rel_('foaf:knows'); # dito
+  $x->rels('foaf:knows');  # all people that $x knows
+  $x->rel_('foaf:knows');  # same
 
-  $x->revs('foaf:knows'); # all people known by $x
-  $x->rev_('foaf:knows'); # dito
+  $x->revs('foaf:knows');  # all people known by $x
+  $x->rev_('foaf:knows');  # same
 
-  $x->foaf_knows;         # short form of $x->rel('foaf:knows')
-  $x->foaf_knows_;        # short form of $x->rels('foaf:knows')
+  $x->foaf_knows;          # short form of $x->rel('foaf:knows')
+  $x->foaf_knows_;         # short form of $x->rels('foaf:knows')
 
-  $x->type;               # same as $x->rel('rdf:type')
-  $x->types;              # same as $x->rels('rdf:type')
+  $x->type;                # same as $x->rel('rdf:type')
+  $x->types;               # same as $x->rels('rdf:type')
 
 =method resource
 =method literal
@@ -299,7 +317,7 @@ __END__
 Return RDF nodes of type resource (L<RDF::Lazy::Resource>), literal 
 (L<RDF::Lazy::Literal>), or blank (L<RDF::Lazy::Blank>).
 
-=method node ( $name | $node )
+=method uri ( $name | $node )
 
 Returns a node that is connected to the graph. Note that every valid RDF node
 is part of any RDF graph: this method does not check whether the graph actually
@@ -308,7 +326,7 @@ instance of L<RDF::Trine::Node>. This method is also called for any undefined
 method, so the following statements are equivalent:
 
     $graph->alice;
-    $graph->node('alice');
+    $graph->uri('alice');
 
 =method rel ( $subject, $property [, @filters ] )
 

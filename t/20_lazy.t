@@ -12,7 +12,7 @@ use_ok 'RDF::Lazy';
 my $graph = RDF::Lazy->new;
 isa_ok $graph, 'RDF::Lazy';
 
-my $lit = $graph->node( literal("Geek & Poke") );
+my $lit = $graph->uri( literal("Geek & Poke") );
 isa_ok $lit, 'RDF::Lazy::Literal';
 ok ($lit->is_literal && !$lit->is_resource && !$lit->is_blank, 'is_literal');
 is $lit->str, 'Geek & Poke', 'stringify literal';
@@ -37,7 +37,7 @@ ok $l1->is_en && $l1->is_en_, 'is_en_ and is_en';
 
 
 #diag('blank nodes');
-my $blank = $graph->node( blank('x1') );
+my $blank = $graph->uri( blank('x1') );
 isa_ok $blank, 'RDF::Lazy::Blank';
 ok (!$blank->is_literal && !$blank->is_resource && $blank->is_blank, 'is_blank');
 is $blank->id, 'x1', 'blank id';
@@ -48,7 +48,7 @@ is RDF::Lazy::Blank->new( $graph, 'x1' )->id, $blank->id, 'blank constructor';
 # TODO: test accessing properties of blank nodes
 
 #diag('resource nodes');
-my $uri = $graph->node( iri('http://example.com/"') );
+my $uri = $graph->uri( iri('http://example.com/"') );
 isa_ok $uri, 'RDF::Lazy::Resource';
 ok (!$uri->is_literal && $uri->is_resource && !$uri->is_blank, 'is_resource');
 is "$uri", 'http://example.com/"', 'stringify URI';
@@ -81,7 +81,7 @@ is_deeply( "$obj", 'Alice', 'literal object');
 $obj = $a->zonk;
 is_deeply( "$obj", 'foo', 'property with default namespace');
 
-is $graph->node('alice')->uri, 'http://example.org/alice';
+is $graph->uri('alice')->uri, 'http://example.org/alice';
 is $graph->bob->foaf_name->str, 'Bob', 'chaining accesors';
 
 is $graph->foaf_name->uri, 'http://xmlns.com/foaf/0.1/name', 'namespace URI';

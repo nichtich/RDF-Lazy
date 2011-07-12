@@ -22,9 +22,14 @@ my $a = $g->resource('http://example.org/alice');
 my $b = $g->resource('http://example.org/bob');
 my $c = $g->resource('http://example.org/claire');
 my $d = $g->resource('http://example.org/dave');
-my $t = $g->node('rdf:type');
-my $p = $g->node('foaf:Person');
-my $o = $g->node('foaf:Organization');
+my $t = $g->uri('rdf:type');
+my $p = $g->uri('foaf:Person');
+my $o = $g->uri('foaf:Organization');
+
+my $x = $g->blank;
+ok( $x->id, 'blank node' );
+$x = $g->blank('foo');
+is( $x->id, 'foo', 'blank node' );
 
 # type
 is( $a->type, $g->foaf_Person, 'type eq' );
@@ -61,7 +66,7 @@ done_testing;
 sub list_is {
 	my ($x,$y,$msg)  = @_;
     $x = [ sort map { "$_" } @$x ];
-    $y = [ sort map { $g->node($_)->str } @$y ];
+    $y = [ sort map { $g->uri($_)->str } @$y ];
 	is_deeply( $x, $y, $msg );
 }
 

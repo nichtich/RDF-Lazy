@@ -15,7 +15,7 @@ sub new {
     my $class  = shift;
     my $graph  = shift || RDF::Lazy::Node::Graph->new;
 
-    # TODO: more lazy!
+    # TODO: lazier and datatype with !
     my ($literal, $language, $datatype) = @_;
     
     $literal = RDF::Trine::Node::Literal->new( $literal, $language, $datatype )
