@@ -15,6 +15,7 @@ use RDF::Lazy::Literal;
 use RDF::Lazy::Resource;
 use RDF::Lazy::Blank;
 use RDF::Trine qw(iri);
+use CGI qw(escapeHTML);
 use Carp qw(carp);
 
 our $AUTOLOAD;
@@ -22,7 +23,8 @@ our $rdf_type = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 
 sub trine { shift->[0]; }
 sub graph { shift->[1]; }
-sub esc   { shift->str; }
+#sub esc   { shift->str; }
+sub esc { escapeHTML( shift->str ) }
 
 sub is_literal  { shift->[0]->is_literal; }
 sub is_resource { shift->[0]->is_resource; }
@@ -41,7 +43,7 @@ sub AUTOLOAD {
 sub type {
     my $self = shift;
 	if ( @_ ) {
-        my $types = $self->graph->rel_( $self, $rdf_type ); # TODO use filter?
+        my $types = $self->rels( $rdf_type ); # TODO use filter?
 	    foreach ( @_ ) {
 			my $type = $self->graph->uri( $_ );
 		    return 1 if (grep { $_ eq $type } @$types);
@@ -49,8 +51,13 @@ sub type {
 		return 0;
 	} else {
 	    # TODO: return multiple types on request
-	    $self->graph->rel( $self, $rdf_type );
+	    $self->rel( $rdf_type );
 	}
+}
+
+sub types {
+    my $self = shift;
+    $self->rels( $rdf_type );
 }
 
 sub is {
@@ -62,7 +69,8 @@ sub is {
             return 1 if $check eq '' or $check eq 'literal';
             return 1 if $check eq '@' and $self->lang;
             return 1 if $check =~ /^@(.+)/ and $self->lang($1);
-            return 1 if $check eq /^\^\^?$/ and $self->datatype;
+            return 1 if $check =~ /^\^\^?$/ and $self->datatype;
+            return 1 if $check =~ /^\^\^?(.+)$/ and $self->datatype($1);
         } elsif ($self->is_resource) {
             return 1 if $check eq ':' or $check eq 'resource';
         } elsif ($self->is_blank) {
@@ -80,8 +88,6 @@ sub rel  { $_[0]->graph->rel( @_ ); }
 sub rels { $_[0]->graph->rels( @_ ); }
 sub rev  { $_[0]->graph->rev( @_ ); }
 sub revs { $_[0]->graph->revs( @_ ); }
-*rel_ = *rels;
-*rev_ = *revs;
 
 sub _autoload {
     my $self     = shift;
@@ -90,132 +96,92 @@ sub _autoload {
     return $self->rel( $property, @_ );
 }
 
-sub objects {
-	carp __PACKAGE__ . '::objects is depreciated - use ::rel instead!';
-    $_[0]->graph->rel( @_ ); 
-}
-
-sub eq { "$_[0]" eq "$_[1]"; } 
+sub eq { 
+    "$_[0]" eq "$_[1]"; 
+} 
 
 1;
 
-=head1 USAGE
+__END__
 
-In general you should not use the node constructor to create new node objects
-but use a graph as node factory:
+=head1 DESCRIPTION
 
-    $graph->resource( $uri );
-    $graph->literal( $string, $language, $datatype );
-    $graph->blank( $id );
+You should not directly create instances of this class, but use L<RDF::Lazy> as
+node factory to create instances of L<RDF::Node::Resource>,
+L<RDF::Node::Literal>, and L<RDF::Node::Blank>.
 
-However, the following syntax is equivalent:
+    $graph->resource( $uri );    # returns a RDF::Node::Resource
+    $graph->literal( $string );  # returns a RDF::Node::Literal
+    $graph->blank( $id );        # returns a RDF::Node::Blank
 
-    RDF::Lazy::Node::Resource->new( $graph, $uri );
-    RDF::Lazy::Node::Literal->new( $graph, $string, $language, $datatype );
-    RDF::Lazy::Node::Blank->new( $graph, $id );
-
-To convert a RDF::Trine::Node object into a RDF::Lazy::Node, you can use:
+A lazy node contains a L<RDF::Trine::Node> and a pointer to the
+RDF::Lazy graph where the node is located in. You can create a
+RDF::Lazy::Node from a RDF::Trine::Node just like this:
 
     $graph->uri( $trine_node )
 
-Note that all these methods silently return undef on failure.
-
-Each RDF::Lazy::Node provides at least the following methods:
-
-=over 4
-
-=item str
+=method str
 
 Returns a string representation of the node's value. Is automatically
 called on string conversion (C<< "$x" >> equals C<< $x->str >>).
 
-=item esc
+=method esc
 
 Returns a HTML-escaped string representation. This can safely be used
 in HTML and XML.
 
-=item is_literal / is_resource / is_blank
+=method is_literal / is_resource / is_blank
 
-Returns true if the node is a literal / resource / blank node.
+Returns true if the node is a literal, resource, or blank node.
 
-=item is ( $check1 [, $check2 ... ] ) 
+=method graph
 
-Checks whether the node fullfills some matching criteria. 
+Returns the underlying graph L<RDF::Lazy> that the node belongs to.
 
-=item type ( [ @types ] )
+=method type ( [ @types ] )
 
 Returns some rdf:type of the node (if no types are provided) or checks
 whether this node is of any of the provided types.
 
-=item trine
+=method is ( $check1 [, $check2 ... ] ) 
 
-Returns the underlying L<RDF::Trine::Node>.
+Checks whether the node fullfills some matching criteria, for instance
 
-=item graph
+    $x->is('')     # is_literal 
+    $x->is(':')    # is_resource
+    $x->is('-')    # is_blank
+    $x->is('@')    # is_literal and has language tag
+    $x->is('@en')  # is_literal and has language tag 'en' (is_en)
+    $x->is('@en-') # is_literal and is_en_
+    $x->is('^')    # is_literal and has datatype
+    $x->is('^^')   # is_literal and has datatype
 
-Returns the underlying graph L<RDF::Lazy> that the node belongs to.
 
-=item turtle
+=method trine
 
-Returns an HTML escaped RDF/Turtle representation of the node's bounded 
-connections.
+Returns the underlying L<RDF::Trine::Node>. You should better not use this.
 
-=item dump
+=method turtle / ttl
 
-Returns an HTML representation of the node and its connections
-(not implemented yet).
+Returns an RDF/Turtle representation of the node's bounded connections.
 
-=back
+=method rel ( $property [, @filters ] )
 
-In addition for literal nodes:
+Traverse the graph and return the first matching object.
 
-=over 4
+=method rels
 
-=item esc
+Traverse the graph and return all matching objects.
 
-...
+=method rev ( $property [, @filters ] )
 
-=item lang
+Traverse the graph and return the first matching subject.
 
-Return the literal's language tag (if the literal has one).
+=method revs
 
-=item type
+Traverse the graph and return all matching subjects.
 
-...
-
-=item is_xxx
-
-Returns whether the literal has language tag xxx, where xxx is a BCP 47 language
-tag locator. For instance C<is_en> matches language tag C<en> (but not C<en-us>), 
-C<is_en_us> matches language tag C<en-us> and C<is_en_> matches C<en> and all
-language tags that start with C<en->. Use C<lang> to check whether there is any
-language tag.
-
-=back
-
-In addition for blank nodes:
-
-=over 4
-
-=item id
-
-Returns the local, temporary identifier of this note.
-
-=back
-
-In addition for resource nodes:
-
-=over 4
-
-=item uri
-
-...
-
-=item href
-
-...
-
-=item rel
+=head2 TRAVERSING THE GRAPH
 
 Any other method name is used to query objects. The following three statements
 are equivalent:
@@ -224,8 +190,6 @@ are equivalent:
     $x->graph->rel( $x, 'foaf_name' );
     $x->rel('foaf_name');
     $x->foaf_name;
-
-=back
 
 You can also add filters in a XPath-like language (the use of RDF::Lazy 
 in a template is an example of a "RDFPath" language):
@@ -237,6 +201,5 @@ in a template is an example of a "RDFPath" language):
     $x->dc_title('^')     # literal with any datatype
     $x->foaf_knows(':')   # any resource
     ...
-=cut
 
-1;
+=cut

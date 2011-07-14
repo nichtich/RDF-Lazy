@@ -1,9 +1,10 @@
-use strict;
+﻿use strict;
 use warnings;
 package RDF::Lazy::Blank;
-#ABSTRACT: A blank node in a lazy RDF graph
+#ABSTRACT: Blank node in a RDF::Lazy graph
 
 use base 'RDF::Lazy::Node';
+use Scalar::Util qw(blessed);
 
 use overload '""' => \&str, 'eq' => \&eq;
 
@@ -13,7 +14,7 @@ sub new {
     my $blank = shift; 
 
     $blank = RDF::Trine::Node::Blank->new( $blank )
-        unless UNIVERSAL::isa( $blank, 'RDF::Trine::Node::Blank' );
+        unless blessed($blank) and $blank->isa('RDF::Trine::Node::Blank');
     return unless defined $blank;
 
     return bless [ $blank, $graph ], $class;
@@ -24,10 +25,26 @@ sub id {
 }
 
 sub str { 
-	# TODO: check whether non-XML characters are possible for esc
     '_:'.shift->trine->blank_identifier
 }
 
-sub eq { $_[0]->id eq $_[1]->id; }
+sub eq { 
+    $_[0]->trine->blank_identifier eq $_[1]->trine->blank_identifier;
+}
 
 1;
+
+=head1 DESCRIPTION
+
+You should not directly create instances of this class.
+See L<RDF::Lazy::Node> for general node properties.
+
+=method id
+
+Return the local identifier of this node.
+
+=method str
+
+Return the local identifier, prepended by "C<_:>".
+
+=cut

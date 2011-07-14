@@ -41,7 +41,8 @@ ok( $a->type('foaf:Person'), 'a faof:Person' );
 ok( $a->type('foaf:Organization','foaf:Person'), 'a faof:Person' );
 ok( $a->type('foaf:Person','foaf:Organization'), 'a faof:Person' );
 
-# TODO: ->types / ->type_
+my $types = $a->types;
+is( $types->[0], $g->foaf_Person, 'types' );
 
 is( $a->foaf_knows, $b, 'a knows b' );
 is( $b->rev('foaf:knows'), $a, 'b is known by a' );
@@ -50,6 +51,7 @@ is( $d->rel, $t, 'd rdf:type _' );
 is( $d->rev, $g->foaf_knows, '_ foaf:knows d' );
 
 list_is( $b->rels('rdf:type'), [qw(foaf:Organization foaf:Person)], 'rels (rdf:type): 2' );
+list_is( $b->types, [qw(foaf:Organization foaf:Person)], 'types' );
 list_is( $c->rels('rdf:type'), [], 'rels (rdf:type): 0' );
 
 list_is( $p->revs('rdf:type'), [qw(x:alice x:bob x:dave)], 'revs (rdf:type): 2' );
