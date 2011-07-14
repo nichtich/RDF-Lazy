@@ -1,12 +1,10 @@
-use strict;
+﻿use strict;
 use warnings;
 
 use Test::More;
-use RDF::Trine qw(iri literal);
-use RDF::Trine::Model;
-use RDF::Trine::Parser;
-use RDF::Trine::NamespaceMap;
-#use Data::Dumper;
+use RDF::Lazy;
+use Data::Dumper;
+use utf8;
 
 BEGIN {
     eval { require Template; };
@@ -17,18 +15,25 @@ BEGIN {
     }
 }
 
-use RDF::Lazy;
-use Carp;
+my ($graph,$rdf,$node,$vars);
 
-my $graph = RDF::Lazy->new;
+$graph = RDF::Lazy->new;
 
-my $s = $graph->literal("hallo","en");
+$node = $graph->literal("hallo","en");
+test_tt('[% foo %]', { foo => $node }, "hallo", "plain literal");
+test_tt('[% foo.is_literal ? 1 : 0 %]', { foo => $node }, "1", "is literal");
+test_tt('[% foo.lang %]', { foo => $node }, "en", "language tag");
+test_tt('[% foo.datatype %]', { foo => $node }, "", "no datatype");
 
-test_tt('[% foo %]', { foo => $s }, "hallo");
-test_tt('[% foo.lang %]', { foo => $s }, "en");
-test_tt('[% foo.type %]', { foo => $s }, "");
+my $x = $graph->uri("<http://example.org>");
+ok( $x->is_resource );
 
-my $model = <<'TURTLE';
+$node = $graph->literal("hallo","<http://example.org/mytype>"); # bug in 0.06 !
+test_tt('[% foo %]', { foo => $node }, "hallo", "datatype literal");
+test_tt('[% foo.lang %]', { foo => $node }, "", "no language tag");
+test_tt('[% foo.datatype %]', { foo => $node }, "http://example.org/mytype", "datatype");
+
+$rdf = <<'TURTLE';
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 <http://example.org/alice> <http://example.org/predicate> <http://example.org/object> .
 <http://example.org/alice> foaf:knows <http://example.org/bob> .
@@ -37,27 +42,37 @@ my $model = <<'TURTLE';
 <http://example.org/bob> foaf:name "Bob" .
 TURTLE
 
-my $map = RDF::Trine::NamespaceMap->new({foaf => iri('http://xmlns.com/foaf/0.1/')});
-$graph = RDF::Lazy->new( namespaces => $map, rdf => $model );
+$graph = RDF::Lazy->new( $rdf, namespaces => {
+    foaf => 'http://xmlns.com/foaf/0.1/',
+    'x'   => 'http://example.org/',
+});
 
-my $a = $graph->resource('http://example.com/"');
+$a = $graph->resource('http://example.com/"');
 
 test_tt('[% a %]', { a => $a }, 'http://example.com/"', 'plain URI with quot');
 test_tt('[% a.href %]', { a => $a }, 'http://example.com/&quot;', 'escaped URI with quot');
 
-$a = $graph->resource('http://example.org/alice');
-my $vars = { 'a' => $a };
+$vars = { 
+    'a' => $graph->resource('http://example.org/alice'), 
+    'b' => $graph->x_bob,
+};
+
 test_tt('[% a.foaf_name %]', $vars, 'Alice', 'single literal property');
 test_tt('[% a.foaf_knows %]', $vars, 'http://example.org/bob', 'single uri property');
 test_tt('[% a.foaf_knows.foaf_name %]', $vars, 'Bob', 'property chain');
 
-# TODO: how to query literal of given language?
-# x.prop('@')   # any language literal
-# x.prop('^')   # any datatype'd literal
-# x.prop('"')   # any literal
-# x.prop(':')   # any URI
-# x.prop('-')   # any blank =>  x.prop('-').id
-# x.prop('@en') # english language literal
+$graph->add(<<'TURTLE');
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+<http://example.org/bob> 
+    foaf:name "Robert"@en, "Роберт"@ru ;
+    foaf:knows [ foaf:name "Алиса"@ru ] ;
+    foaf:age "very old", 88, "eightyeight" .
+TURTLE
+
+test_tt('[% b.foaf_name("@en") %]', $vars, 'Robert', 'Property value of specific language');
+test_tt('[% b.foaf_name("@ru") %]', $vars, 'Роберт', 'Property value of specific language');
+test_tt('[% x = b.foaf_knows("-"); x.foaf_name.lang %]', $vars, 'ru', 'Select blank node and language' );
+test_tt('[% b.foaf_age("^") %]', $vars, '88', 'Property value with datatype');
 
 done_testing;
 
@@ -67,9 +82,6 @@ sub test_tt {
     Template->new->process(\$template, $vars, \$out);
     is $out, $expected, $msg;
 }
-
-# TemplateToolkit allows for variable names containing alphanumeric characters and underscores.
-# Upper case variable names are permitted, but not recommended.
 
 __END__
 

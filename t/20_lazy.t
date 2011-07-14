@@ -35,6 +35,8 @@ ok $l1->is('@') && $l1->is('@en-'), 'is(...)';
 $l1 = $graph->literal("love","en");
 ok $l1->is_en && $l1->is_en_, 'is_en_ and is_en';
 
+$l1 = $graph->literal("hello","<http://example.org/mytype>");
+is $l1->datatype, "http://example.org/mytype", "datatype";
 
 #diag('blank nodes');
 my $blank = $graph->uri( blank('x1') );

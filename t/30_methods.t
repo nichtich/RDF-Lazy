@@ -64,7 +64,7 @@ list_is( $a->revs, [], 'rels (empty)' );
 list_is( $p->revs, [qw(rdf:type)], 'revs (1)' );
 list_is( $d->revs, [qw(foaf:knows)], 'revs (1)' );
 
-# TODO: test ->rev_ and rev(foaf_knows_)
+# TODO: test rev(foaf_knows_)
 
 $g = RDF::Lazy->new( namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } );
 $g->add( "<http://example.org/foo>", "foaf:knows", "<http://example.org/baz>" );

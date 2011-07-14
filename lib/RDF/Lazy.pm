@@ -368,10 +368,7 @@ __END__
   $x->rev('foaf:knows');    # retrieve a person known by $x
 
   $x->rels('foaf:knows');   # retrieve all people that $x knows
-  $x->rel_('foaf:knows');   # same
-
   $x->revs('foaf:knows');   # retrieve all people known by $x
-  $x->rev_('foaf:knows');   # same
 
   $x->foaf_knows;           # short form of $x->rel('foaf:knows')
   $x->foaf_knows_;          # short form of $x->rels('foaf:knows')

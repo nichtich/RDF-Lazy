@@ -23,7 +23,7 @@ sub new {
         if ($language =~ $LANGTAG) {
             $datatype = undef;
         } elsif( not defined $datatype ) {
-            $datatype = $graph->uri($language);
+            $datatype = $graph->uri($language)->trine;
             $language = undef;
         }
     }
