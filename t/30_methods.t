@@ -9,13 +9,13 @@ my $model = RDF::Trine::Model->new;
 my $parser = RDF::Trine::Parser->new('turtle');
 $parser->parse_into_model( 'http://example.org/', join('',<DATA>), $model );
 
-my $g = RDF::Lazy->new( 
-	rdf => $model,
-	namespaces => { 
-		foaf => 'http://xmlns.com/foaf/0.1/',
-		rdf  => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-		x    => 'http://example.org/',
-	},
+my $g = RDF::Lazy->new(
+    rdf => $model,
+    namespaces => {
+        foaf => 'http://xmlns.com/foaf/0.1/',
+        rdf  => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+        x    => 'http://example.org/',
+    },
 );
 
 my $a = $g->uri('<http://example.org/alice>');
@@ -73,10 +73,10 @@ like( $g->ttl, qr{<http://example.org/foo> foaf:knows <http://example.org/baz> .
 done_testing;
 
 sub list_is {
-	my ($x,$y,$msg)  = @_;
+    my ($x,$y,$msg)  = @_;
     $x = [ sort map { "$_" } @$x ];
     $y = [ sort map { $g->uri($_)->str } @$y ];
-	is_deeply( $x, $y, $msg );
+    is_deeply( $x, $y, $msg );
 }
 
 __DATA__

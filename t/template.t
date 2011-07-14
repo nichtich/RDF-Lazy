@@ -41,7 +41,7 @@ my $map = RDF::Trine::NamespaceMap->new({foaf => iri('http://xmlns.com/foaf/0.1/
 $graph = RDF::Lazy->new( namespaces => $map, rdf => $model );
 
 my $a = $graph->resource('http://example.com/"');
- 
+
 test_tt('[% a %]', { a => $a }, 'http://example.com/"', 'plain URI with quot');
 test_tt('[% a.href %]', { a => $a }, 'http://example.com/&quot;', 'escaped URI with quot');
 

@@ -26,7 +26,7 @@ my $l1 = $graph->literal("bill","en-GB");
 my $l2 = $graph->literal("check","en-US");
 is "$l1", "bill", 'literal with language code';
 is $l1->lang, 'en-gb';
-is $l2->lang, 'en-us'; 
+is $l2->lang, 'en-us';
 ok $l1->is_en_gb && !$l2->is_en_gb, 'is_en_gb';
 ok !$l1->is_en_us && $l2->is_en_us, 'is_en_us';
 ok $l1->is_en_ && $l2->is_en_ && !$l1->is_en, 'is_en_';
@@ -69,11 +69,11 @@ $parser->parse_into_model( $base, join('',<DATA>), $model );
 $graph = RDF::Lazy->new( namespaces => $map, rdf => $model );
 
 my $obj = [ map { "$_" }
-    	$graph->rel( iri('http://example.org/alice'), 'foaf_knows' ) 
-	];
+        $graph->rel( iri('http://example.org/alice'), 'foaf_knows' )
+    ];
 
 is_deeply( $obj, ['http://example.org/bob'], 'resource object');
- 
+
 my $a = $graph->resource('http://example.org/alice');
 $obj = $a->foaf_name;
 is_deeply( "$obj", 'Alice', 'literal object');

@@ -25,7 +25,7 @@ sub new {
     }
 
     my $namespaces = $args{namespaces} || RDF::Trine::NamespaceMap->new;
-    $namespaces = RDF::Trine::NamespaceMap->new( $namespaces ) unless 
+    $namespaces = RDF::Trine::NamespaceMap->new( $namespaces ) unless
         blessed($namespaces) and $namespaces->isa('RDF::Trine::NamespaceMap');
 
     my $self = bless {
@@ -37,7 +37,7 @@ sub new {
         if ($rdf->isa('RDF::Trine::Model')) {
             $self->{model} = $rdf; # model added by reference
         } elsif ($rdf->isa('RDF::Trine::Store')) {
-            $self->{model} = RDF::Trine::Model->new($rdf); 
+            $self->{model} = RDF::Trine::Model->new($rdf);
         }
     }
 
@@ -56,7 +56,7 @@ sub add { # rdf by value
     # TODO: have a look at RDF::TrineShortcuts::rdf_parse
 
     if (@_ == 3 and $_[1] !~ /^[a-z]+$/) { # TODO: allow 'a'?
-        my @triple = @_; 
+        my @triple = @_;
         @triple = map { $self->uri($_) } @triple;
         if ( grep { not defined $_ } @triple ) {
             croak 'Failed to add pseudo-triple';
@@ -73,9 +73,9 @@ sub add { # rdf by value
         if ($rdf->isa('RDF::Trine::Graph')) {
             $rdf = $rdf->get_statements;
         }
-        if ($rdf->isa('RDF::Trine::Iterator::Graph')) { 
+        if ($rdf->isa('RDF::Trine::Iterator::Graph')) {
             $self->model->begin_bulk_ops;
-            while (my $row = $rdf->next) { 
+            while (my $row = $rdf->next) {
                 $self->model->add_statement( $row );
             }
             $self->model->end_bulk_ops;
@@ -122,7 +122,7 @@ sub revs { shift->_relrev( 1, 'rev', @_  ); }
 sub turtle {
     my $self     = shift;
     my $subject  = shift;
-  
+
     use RDF::Trine::Serializer::Turtle;
     my $serializer = RDF::Trine::Serializer::Turtle->new( namespaces => $self->{namespaces} );
 
@@ -142,8 +142,8 @@ sub turtle {
 *ttl = *turtle;
 
 sub ttlpre {
-    return '<pre class="turtle">' 
-        . escapeHTML( "# $_[0]\n" . ttl(@_) ) 
+    return '<pre class="turtle">'
+        . escapeHTML( "# $_[0]\n" . ttl(@_) )
         . '</pre>';
 }
 
@@ -203,7 +203,7 @@ sub uri {
         $uri = $ns->uri($local) if defined $ns;
     }
 
-    return unless defined $uri; 
+    return unless defined $uri;
     return $self->resource( $uri );
 }
 
@@ -270,8 +270,8 @@ sub _literal {
     } elsif( $s =~ $r_boolean ) {
         $literal = $s;
         $datatype = $xsd->boolean;
-    } 
-    
+    }
+
     return $self->literal( $literal, $language, $datatype );
 }
 
@@ -311,7 +311,7 @@ sub _relrev {
         my ($property,@filter) = @_;
         $all = 1 if ($property and not ref $property and $property =~ s/^(.+[^_])_$/$1/);
         return $self->_query( $all, $type, $subject, $property, @filter );
-    } else { 
+    } else {
         # get all predicates
         $subject = $self->uri($subject)
             unless blessed($subject) and $subject->isa('RDF::Lazy::Node');
@@ -349,7 +349,7 @@ __END__
   $g = RDF::Lazy->new( $data, format => 'rdfxml' );  # parse RDF/XML
 
   ### How to get nodes
-  
+
   $p = $f->resource('http://xmlns.com/foaf/0.1/Person'); # get node
   $p = $f->uri('<http://xmlns.com/foaf/0.1/Person>');    # alternatively
   $p = $f->uri('foaf:Person);                            # same but lazier
@@ -363,10 +363,10 @@ __END__
   $b = $g->blank;           # get blank node with random id
 
   ### How to retrieve RDF
-  
+
   $x->rel('foaf:knows');    # retrieve a person that $x knows
   $x->rev('foaf:knows');    # retrieve a person known by $x
-  
+
   $x->rels('foaf:knows');   # retrieve all people that $x knows
   $x->rel_('foaf:knows');   # same
 
@@ -408,7 +408,7 @@ prefixes. For lazy access and graph traversal, each RDF node
 =method new ( [ [ rdf => ] $rdf ] [, namespaces => $namespaces ] [ %options ])
 
 Return new RDF graph. Namespaces can be provided as hash reference or as
-L<RDF::Trine::NamespaceMap>. RDF data can be L<RDF:Trine::Model> or 
+L<RDF::Trine::NamespaceMap>. RDF data can be L<RDF:Trine::Model> or
 L<RDF::Trine::Store>, which are used by reference, or many other forms,
 as supported by L<add|/add>.
 
@@ -417,7 +417,7 @@ as supported by L<add|/add>.
 Return L<RDF::Lazy::Resource> node. The following statements are equivalent:
 
     $graph->resource('http://example.org');
-    $graph->uri('<http://example.org>');    
+    $graph->uri('<http://example.org>');
 
 =method literal ( $string , $language_or_datatype, $datatype )
 
@@ -425,7 +425,7 @@ Return L<RDF::Lazy::Literal> node.
 
 =method blank ( [ $identifier ] )
 
-Return L<RDF::Lazy::Blank> node. A random identifier is generated unless you 
+Return L<RDF::Lazy::Blank> node. A random identifier is generated unless you
 provide an identifier as parameter.
 
 =method uri ( $name | $node )
@@ -446,7 +446,7 @@ Can be used to traverse the graph. See L<RDF::Lazy::Node>:
     $node->rel( ... )           # where $node is located in $graph
     $graph->rel( $node, ... )   # equivalent
 
-=method add 
+=method add
 
 Add RDF data. I<Sorry, not documented yet!>
 
@@ -456,7 +456,7 @@ Returns a RDF/Turtle representation of a node's bounded description.
 
 =method ttlpre ( [ $node ] )
 
-Returns an HTML escaped RDF/Turtle representation of a node's bounded 
+Returns an HTML escaped RDF/Turtle representation of a node's bounded
 description, wrapped in a HTML C<< <pre class="turtle"> >> element.
 
 =head1 SEE ALSO

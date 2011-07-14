@@ -42,17 +42,17 @@ sub AUTOLOAD {
 
 sub type {
     my $self = shift;
-	if ( @_ ) {
+    if ( @_ ) {
         my $types = $self->rels( $rdf_type ); # TODO use filter?
-	    foreach ( @_ ) {
-			my $type = $self->graph->uri( $_ );
-		    return 1 if (grep { $_ eq $type } @$types);
-		}
-		return 0;
-	} else {
-	    # TODO: return multiple types on request
-	    $self->rel( $rdf_type );
-	}
+        foreach ( @_ ) {
+            my $type = $self->graph->uri( $_ );
+            return 1 if (grep { $_ eq $type } @$types);
+        }
+        return 0;
+    } else {
+        # TODO: return multiple types on request
+        $self->rel( $rdf_type );
+    }
 }
 
 sub types {
@@ -96,9 +96,9 @@ sub _autoload {
     return $self->rel( $property, @_ );
 }
 
-sub eq { 
-    "$_[0]" eq "$_[1]"; 
-} 
+sub eq {
+    "$_[0]" eq "$_[1]";
+}
 
 1;
 
@@ -143,11 +143,11 @@ Returns the underlying graph L<RDF::Lazy> that the node belongs to.
 Returns some rdf:type of the node (if no types are provided) or checks
 whether this node is of any of the provided types.
 
-=method is ( $check1 [, $check2 ... ] ) 
+=method is ( $check1 [, $check2 ... ] )
 
 Checks whether the node fullfills some matching criteria, for instance
 
-    $x->is('')     # is_literal 
+    $x->is('')     # is_literal
     $x->is(':')    # is_resource
     $x->is('-')    # is_blank
     $x->is('@')    # is_literal and has language tag
@@ -191,9 +191,9 @@ are equivalent:
     $x->rel('foaf_name');
     $x->foaf_name;
 
-You can also add filters in a XPath-like language (the use of RDF::Lazy 
+You can also add filters in a XPath-like language (the use of RDF::Lazy
 in a template is an example of a "RDFPath" language):
-  
+
     $x->dc_title('@en')   # literal with language tag @en
     $x->dc_title('@en-')  # literal with language tag @en or @en-...
     $x->dc_title('')      # any literal

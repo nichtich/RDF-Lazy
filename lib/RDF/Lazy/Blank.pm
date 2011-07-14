@@ -11,7 +11,7 @@ use overload '""' => \&str, 'eq' => \&eq;
 sub new {
     my $class = shift;
     my $graph = shift || RDF::Lazy::Node::Graph->new;
-    my $blank = shift; 
+    my $blank = shift;
 
     $blank = RDF::Trine::Node::Blank->new( $blank )
         unless blessed($blank) and $blank->isa('RDF::Trine::Node::Blank');
@@ -20,15 +20,15 @@ sub new {
     return bless [ $blank, $graph ], $class;
 }
 
-sub id { 
+sub id {
     shift->trine->blank_identifier
 }
 
-sub str { 
+sub str {
     '_:'.shift->trine->blank_identifier
 }
 
-sub eq { 
+sub eq {
     $_[0]->trine->blank_identifier eq $_[1]->trine->blank_identifier;
 }
 

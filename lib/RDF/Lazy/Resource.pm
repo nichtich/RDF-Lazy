@@ -12,7 +12,7 @@ use overload '""' => \&str, 'eq' => \&eq;
 sub new {
     my $class    = shift;
     my $graph    = shift || RDF::Lazy::Node::Graph->new;
-    my $resource = shift; 
+    my $resource = shift;
 
     return unless defined $resource;
 
@@ -24,13 +24,13 @@ sub new {
     return bless [ $resource, $graph ], $class;
 }
 
-sub str { 
-    shift->trine->uri_value; 
+sub str {
+    shift->trine->uri_value;
 }
 
-sub eq { 
-    "$_[0]" eq "$_[1]"; 
-} 
+sub eq {
+    "$_[0]" eq "$_[1]";
+}
 
 *uri  = *str;
 

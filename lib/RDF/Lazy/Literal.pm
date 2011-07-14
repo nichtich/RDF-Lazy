@@ -18,7 +18,7 @@ sub new {
     my $literal = shift;
 
     my ($language, $datatype) = @_;
-    
+
     if (defined $language) {
         if ($language =~ $LANGTAG) {
             $datatype = undef;
@@ -31,15 +31,15 @@ sub new {
     $literal = RDF::Trine::Node::Literal->new( $literal, $language, $datatype )
         unless blessed($literal) and $literal->isa('RDF::Trine::Node::Literal');
     return unless defined $literal;
-    
+
     return bless [ $literal, $graph ], $class;
 }
 
-sub str { 
-    shift->trine->literal_value 
+sub str {
+    shift->trine->literal_value
 }
 
-sub lang { 
+sub lang {
     my $self = shift;
     my $lang = $self->trine->literal_value_language;
     return $lang if not @_ or not $lang;
@@ -52,10 +52,10 @@ sub lang {
         return $lang;
     }
 
-    return; 
+    return;
 }
 
-sub datatype { 
+sub datatype {
     my $self = shift;
     my $type = $self->graph->resource( $self->trine->literal_datatype );
     return $type unless @_ and $type;
@@ -76,7 +76,7 @@ sub _autoload {
 
     # We assume that no language is named 'blank', 'literal', or 'resource'
     return 1 if $self->lang($1);
-        
+
     return;
 }
 
@@ -110,7 +110,7 @@ Return whether this node matches a given language tag, for instance
 
 =method datatype ( [ @types ] )
 
-Return the datatype (as L<RDF::Node::Resource>, if this node has one. 
+Return the datatype (as L<RDF::Node::Resource>, if this node has one.
 Can also be used to checks whether the datatype matches, for instance:
 
     $node->datatype('xsd:integer','xsd:double');

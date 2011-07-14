@@ -14,8 +14,8 @@ my $model = RDF::Trine::Model->new;
 my $parser = RDF::Trine::Parser->new('turtle');
 $parser->parse_into_model( $base, join('',<DATA>), $model );
 
-my $g = RDF::Lazy->new( $model, 
-	namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' }
+my $g = RDF::Lazy->new( $model,
+    namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' }
 );
 
 my $a = $g->resource('http://example.org/alice');
