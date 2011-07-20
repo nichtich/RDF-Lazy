@@ -68,7 +68,7 @@ list_is( $d->revs, [qw(foaf:knows)], 'revs (1)' );
 
 $g = RDF::Lazy->new( namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } );
 $g->add( "<http://example.org/foo>", "foaf:knows", "<http://example.org/baz>" );
-like( $g->ttl, qr{<http://example.org/foo> foaf:knows <http://example.org/baz> .}, 'added triple' );
+like( $g->turtle, qr{<http://example.org/foo> foaf:knows <http://example.org/baz> .}, 'added triple' );
 
 done_testing;
 

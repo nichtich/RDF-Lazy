@@ -82,7 +82,7 @@ sub is {
 }
 
 sub turtle { $_[0]->graph->turtle( @_ ); }
-*ttl = *turtle;
+sub ttlpre { $_[0]->graph->ttlpre( @_ ); }
 
 sub rel  { $_[0]->graph->rel( @_ ); }
 sub rels { $_[0]->graph->rels( @_ ); }

@@ -139,11 +139,11 @@ sub turtle {
     return $serializer->serialize_iterator_to_string( $iterator );
 }
 
-*ttl = *turtle;
+#*ttl = *turtle;
 
 sub ttlpre {
     return '<pre class="turtle">'
-        . escapeHTML( "# $_[0]\n" . ttl(@_) )
+        . escapeHTML( "# $_[0]\n" . turtle(@_) )
         . '</pre>';
 }
 
@@ -390,7 +390,7 @@ __END__
 
   ### How to show RDF
 
-  $g->ttl;     # dump in RDF/Turtle syntax
+  $g->turtle;  # dump in RDF/Turtle syntax
   $g->ttlpre;  # dump in RDF/Turtle, wrapped in a HTML <pre> tag
 
 =head1 DESCRIPTION

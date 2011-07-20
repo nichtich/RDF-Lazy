@@ -25,7 +25,8 @@ is( $s->str, "true", 'parse plain true' );
 
 
 # Turtle
-like ( $rdf->ttlpre, qr/^<pre/ );
+like ( $rdf->ttlpre, qr/^<pre.*alice&gt;.*knows&gt;/s, 'RDF::Lazy->ttlpre' );
+like ( $rdf->resource('http://example.org/bob')->ttlpre, qr/^<pre.*4 triples.*bob&gt;.*knows&gt;/s, 'RDF::Lazy::Node->ttlpre' );
 
 done_testing;
 
