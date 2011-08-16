@@ -8,12 +8,16 @@ use RDF::Trine::NamespaceMap;
 use CGI qw(escapeHTML);
 
 use RDF::Lazy::Node;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Carp qw(carp croak);
 
 our $AUTOLOAD;
 
-use overload '""' => sub { shift->size . " triples"; };
+#use overload '""' => \&str;
+
+sub str {
+    shift->size . " triples";
+}
 
 sub new {
     my $class = shift;
@@ -143,7 +147,7 @@ sub turtle {
 
 sub ttlpre {
     return '<pre class="turtle">'
-        . escapeHTML( "# $_[0]\n" . turtle(@_) )
+        . escapeHTML( "# " . ($_[0]->str||'') . "\n" . turtle(@_) )
         . '</pre>';
 }
 
@@ -161,17 +165,19 @@ sub uri {
     return unless defined $node;
 
     if (blessed $node) {
-           if ($node->isa('RDF::Lazy::Node')) {
-            $node = $self->uri( $node->trine ); # copy from another graph
-        }
+        if ($node->isa('RDF::Lazy::Node')) {
+            # copy from another or from this graph
+            # return $node if refaddr($node->graph) eq refaddr($self);
+            $node = $self->trine;
+        } 
         if ($node->isa('RDF::Trine::Node::Resource')) {
-            return $self->resource( $node );
+            return RDF::Lazy::Resource->new( $self, $node );
         } elsif ($node->isa('RDF::Trine::Node::Literal')) {
-                return $self->literal( $node );
+            return RDF::Lazy::Literal->new( $self, $node );
         } elsif ($node->isa('RDF::Trine::Node::Blank')) {
-            return $self->blank( $node );
+            return RDF::Lazy::Blank->new( $self, $node );
         } else {
-            carp 'Cannot create RDF::Lazy::Node from '.ref($node);
+            carp 'Cannot create RDF::Lazy::Node from ' . ref($node);
             return;
         }
     }
@@ -179,11 +185,11 @@ sub uri {
     my ($prefix,$local,$uri);
 
     if ( $node =~ /^<(.*)>$/ ) {
-        return $self->resource($1);
+        return RDF::Lazy::Resource->new( $self, $1 );
     } elsif ( $node =~ /^_:(.*)$/ ) {
-        return $self->blank( $1 );
+        return RDF::Lazy::Blank->new( $self, $1 );
     } elsif ( $node =~ /^\[\s*\]$/ ) {
-        return $self->blank;
+        return RDF::Lazy::Blank->new( $self );
     } elsif ( $node =~ /^["'+-0-9]|^(true|false)$/ ) {
         return $self->_literal( $node );
     } elsif ( $node =~ /^([^:]*):([^:]*)$/ ) {
@@ -204,7 +210,7 @@ sub uri {
     }
 
     return unless defined $uri;
-    return $self->resource( $uri );
+    return RDF::Lazy::Resource->new( $self, $uri );
 }
 
 sub namespaces {

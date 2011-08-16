@@ -7,7 +7,7 @@ use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
 use CGI qw(escapeHTML);
 
-use overload '""' => \&str, 'eq' => \&eq;
+use overload '""' => \&str;
 
 sub new {
     my $class    = shift;
@@ -26,10 +26,6 @@ sub new {
 
 sub str {
     shift->trine->uri_value;
-}
-
-sub eq {
-    "$_[0]" eq "$_[1]";
 }
 
 *uri  = *str;

@@ -10,7 +10,7 @@ my $rdf = RDF::Lazy->new($data);
 is( $rdf->size, 4, 'rdf data as first parameter' );
 
 $rdf = RDF::Lazy->new( rdf => $data );
-is( "$rdf", "4 triples", 'rdf data with named parameter' );
+is( $rdf->str, "4 triples", 'rdf data with named parameter' );
 
 my $s = $rdf->uri('"hello"');
 is( $s->str, "hello", 'parse plain literal' );

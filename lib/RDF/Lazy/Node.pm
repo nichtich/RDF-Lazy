@@ -46,7 +46,7 @@ sub type {
         my $types = $self->rels( $rdf_type ); # TODO use filter?
         foreach ( @_ ) {
             my $type = $self->graph->uri( $_ );
-            return 1 if (grep { $_ eq $type } @$types);
+            return 1 if (grep { $_->str eq $type->str } @$types);
         }
         return 0;
     } else {
@@ -94,10 +94,6 @@ sub _autoload {
     my $property = shift;
     return if $property =~ /^(query|lang)$/; # reserved words
     return $self->rel( $property, @_ );
-}
-
-sub eq {
-    "$_[0]" eq "$_[1]";
 }
 
 1;

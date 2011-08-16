@@ -48,7 +48,7 @@ sub lang {
     $xxx =~ s/_/-/g;
     return unless $xxx =~ $LANGTAG;
 
-    if ( $xxx eq $lang or $xxx =~ s/-$// and index($lang, $xxx) == 0 ) {
+    if ( $xxx eq "$lang" or $xxx =~ s/-$// and index($lang, $xxx) == 0 ) {
         return $lang;
     }
 

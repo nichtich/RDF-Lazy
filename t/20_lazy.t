@@ -36,7 +36,7 @@ $l1 = $graph->literal("love","en");
 ok $l1->is_en && $l1->is_en_, 'is_en_ and is_en';
 
 $l1 = $graph->literal("hello","<http://example.org/mytype>");
-is $l1->datatype, "http://example.org/mytype", "datatype";
+is $l1->datatype->str, "http://example.org/mytype", "datatype";
 
 #diag('blank nodes');
 my $blank = $graph->uri( blank('x1') );
@@ -90,17 +90,19 @@ is $graph->foaf_name->uri, 'http://xmlns.com/foaf/0.1/name', 'namespace URI';
 is $graph->foaf_foo_bar->uri, 'http://xmlns.com/foaf/0.1/foo_bar', 'namespace URI with _';
 
 $graph->add( statement(
-  iri('http://example.org/alice'),
-  iri('http://example.org/zonk'),
-  literal('bar','fr'),
+  iri('http://example.org/alice'), iri('http://example.org/zonk'), literal('bar','fr'),
+));
+$graph->add( statement(
+  iri('http://example.org/alice'), iri('http://example.org/zonk'), literal('doz'),
 ));
 
 $obj = $a->zonk('@fr');
 is_deeply( "$obj", 'bar', 'property with filter');
+#$obj
 
-# TODO:
-# $obj = $a->zonk('@fr','');
-# is_deeply( "$obj", 'bar', 'property with filter');
+$obj = $a->zonk('@en','');
+is_deeply( "$obj", 'doz', 'property with filter');
+
 
 # TODO: Test dumper
 my $d = $a->turtle;
