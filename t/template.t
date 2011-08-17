@@ -52,8 +52,8 @@ $a = $graph->resource('http://example.com/"');
 test_tt('[% a %]', { a => $a }, 'http://example.com/"', 'plain URI with quot');
 test_tt('[% a.href %]', { a => $a }, 'http://example.com/&quot;', 'escaped URI with quot');
 
-$vars = { 
-    'a' => $graph->resource('http://example.org/alice'), 
+$vars = {
+    'a' => $graph->resource('http://example.org/alice'),
     'b' => $graph->x_bob,
 };
 
@@ -63,7 +63,7 @@ test_tt('[% a.foaf_knows.foaf_name %]', $vars, 'Bob', 'property chain');
 
 $graph->add(<<'TURTLE');
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-<http://example.org/bob> 
+<http://example.org/bob>
     foaf:name "Robert"@en, "Роберт"@ru ;
     foaf:knows [ foaf:name "Алиса"@ru ] ;
     foaf:age "very old", 88, "eightyeight" .

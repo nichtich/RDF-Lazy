@@ -169,7 +169,7 @@ sub uri {
             # copy from another or from this graph
             # return $node if refaddr($node->graph) eq refaddr($self);
             $node = $self->trine;
-        } 
+        }
         if ($node->isa('RDF::Trine::Node::Resource')) {
             return RDF::Lazy::Resource->new( $self, $node );
         } elsif ($node->isa('RDF::Trine::Node::Literal')) {

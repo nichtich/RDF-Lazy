@@ -1,5 +1,8 @@
 # Change file for RDF::Source
 
-0.06
+0.062  2011-08-17
+    Removed Template dependency and increased performance
+
+0.06   2011-07-14
     First version with this Change file
 

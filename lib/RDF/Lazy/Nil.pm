@@ -8,7 +8,7 @@ use overload '""' => sub { ""; }, 'bool' => sub { 0 };
 
 sub new {
     my $class = shift;
-    bless [ ], $class;    
+    bless [ ], $class;
 }
 
 1;

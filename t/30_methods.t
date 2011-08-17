@@ -69,7 +69,7 @@ is ( $g->x_foo->dcterms_title->str, "FOO" );
 
 # TODO: test rev(foaf_knows_)
 
-#$g = RDF::Lazy->new( namespaces => { 
+#$g = RDF::Lazy->new( namespaces => {
 #    foaf => 'http://xmlns.com/foaf/0.1/'
 #} );
 #$g->add("<http://uri.gbv.de/database/gvk>", "dcterms:title", $g->literal('Foo') );
