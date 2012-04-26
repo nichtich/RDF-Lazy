@@ -1,5 +1,8 @@
 # Change file for RDF::Source
 
+0.063  2012-04-27
+	Added serializers for RDF/XML and RDF/JSON
+
 0.062  2011-08-17
     Removed Template dependency and increased performance
 

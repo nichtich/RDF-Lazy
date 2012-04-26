@@ -128,11 +128,11 @@ sub rev  { shift->_relrev( 0, 'rev', @_  ); }
 sub revs { shift->_relrev( 1, 'rev', @_  ); }
 
 sub turtle {
-	my $self = shift;
+    my $self = shift;
     $self->_serialize(
-    	RDF::Trine::Serializer::Turtle->new( namespaces => $self->{namespaces} ),
-		@_
-	);
+        RDF::Trine::Serializer::Turtle->new( namespaces => $self->{namespaces} ),
+        @_
+    );
 }
 
 sub rdfjson {
@@ -140,12 +140,12 @@ sub rdfjson {
 }
 
 sub rdfxml {
-	my $self = shift;
+    my $self = shift;
     $self->_serialize(
-    	RDF::Trine::Serializer::RDFXML->new( namespaces => $self->{namespaces} ),
-		@_
-	);
-}	
+        RDF::Trine::Serializer::RDFXML->new( namespaces => $self->{namespaces} ),
+        @_
+    );
+}
 
 sub ttlpre {
     return '<pre class="turtle">'
