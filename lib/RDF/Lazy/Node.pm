@@ -51,7 +51,6 @@ sub type {
         }
         return 0;
     } else {
-        # TODO: return multiple types on request
         $self->rel( $rdf_type );
     }
 }

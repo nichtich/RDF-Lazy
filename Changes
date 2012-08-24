@@ -1,6 +1,6 @@
 # Change file for RDF::Lazy
 
-0.064  2012-08-24
+0.07   2012-08-24
     Added support of RDF::NS
 
 0.063  2012-04-27

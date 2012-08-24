@@ -34,7 +34,7 @@ instance C<hello world>.
 implemented by L<RDF::Lazy::Literal> and stringified to C<_:> followed by
 their internal blank node identifier, for instance C<_:n0815>.
 
-=cut
+=back
 
 Nodes have a couple of useful methods. For instance you can check the kind
 of a node C<x> with the methods C<is_resource> (or its alias C<is_uri>),
@@ -72,6 +72,11 @@ For instance you can show the number of triples in a node's graph like this:
 
 =head2 Traversing the graph
 
-...
+One can traverse the RDF graph from any node. For instance, given a
+C<foaf:Person> node, one can get another resource linked via C<foaf:knows>: 
+
+    if ( $x->type('foaf:Person') ) {
+        $another_person = $x->foaf_knows;
+    }
 
 =cut
