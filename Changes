@@ -1,7 +1,10 @@
-# Change file for RDF::Source
+# Change file for RDF::Lazy
+
+0.064  2012-08-24
+    Added support of RDF::NS
 
 0.063  2012-04-27
-	Added serializers for RDF/XML and RDF/JSON
+    Added serializers for RDF/XML and RDF/JSON
 
 0.062  2011-08-17
     Removed Template dependency and increased performance

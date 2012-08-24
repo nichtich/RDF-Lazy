@@ -11,7 +11,7 @@ use overload '""' => \&str;
 
 sub new {
     my $class    = shift;
-    my $graph    = shift || RDF::Lazy::Node::Graph->new;
+    my $graph    = shift || RDF::Lazy->new;
     my $resource = shift;
 
     return unless defined $resource;

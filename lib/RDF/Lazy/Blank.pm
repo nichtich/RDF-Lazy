@@ -10,7 +10,7 @@ use overload '""' => \&str;
 
 sub new {
     my $class = shift;
-    my $graph = shift || RDF::Lazy::Node::Graph->new;
+    my $graph = shift || RDF::Lazy->new;
     my $blank = shift;
 
     $blank = RDF::Trine::Node::Blank->new( $blank )

@@ -6,7 +6,7 @@ use RDF::Lazy;
 
 my $data = join('',<DATA>);
 
-my $rdf = RDF::Lazy->new($data);
+my $rdf = RDF::Lazy->new( $data );
 is( $rdf->size, 4, 'rdf data as first parameter' );
 
 $rdf = RDF::Lazy->new( rdf => $data );
@@ -21,12 +21,12 @@ is( $s->lang, "en", 'parse literal with language' );
 $s = $rdf->uri('true');
 is( $s->str, "true", 'parse plain true' );
 
-# ...
-
-
 # Turtle
-like ( $rdf->ttlpre, qr/^<pre.*alice&gt;.*knows&gt;/s, 'RDF::Lazy->ttlpre' );
-like ( $rdf->resource('http://example.org/bob')->ttlpre, qr/^<pre.*4 triples.*bob&gt;.*knows&gt;/s, 'RDF::Lazy::Node->ttlpre' );
+like( $rdf->ttlpre, qr/^<pre.*alice&gt;.*bob&gt;/ms, 'RDF::Lazy->ttlpre' );
+like( $rdf->resource('http://example.org/bob')->ttlpre, qr/^<pre.*4 triples.*bob&gt;.*knows &lt;/ms, 'RDF::Lazy::Node->ttlpre' );
+
+#$rdf = RDF::Lazy->new( 'file://t/example.ttl' );
+#is( $rdf->ttl, "<http://example.org/foo> a <http://xmlns.com/foaf/0.1/Person> .\n", 'read from file' );
 
 done_testing;
 

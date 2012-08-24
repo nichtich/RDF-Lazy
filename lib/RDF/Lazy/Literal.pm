@@ -14,7 +14,7 @@ our $LANGTAG = qr/^(([a-z]{2,8}|[a-z]{2,3}-[a-z]{3})(-[a-z0-9_]+)?-?)$/i;
 
 sub new {
     my $class   = shift;
-    my $graph   = shift || RDF::Lazy::Node::Graph->new;
+    my $graph   = shift || RDF::Lazy->new;
     my $literal = shift;
 
     my ($language, $datatype) = @_;
@@ -110,7 +110,7 @@ Return whether this node matches a given language tag, for instance
 
 =method datatype ( [ @types ] )
 
-Return the datatype (as L<RDF::Node::Resource>, if this node has one.
+Return the datatype (as L<RDF::Lazy::Resource>, if this node has one.
 Can also be used to checks whether the datatype matches, for instance:
 
     $node->datatype('xsd:integer','xsd:double');

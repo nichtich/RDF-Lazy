@@ -15,7 +15,7 @@ my $g = RDF::Lazy->new(
         foaf    => 'http://xmlns.com/foaf/0.1/',
         rdf     => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
         dcterms => 'http://purl.org/dc/terms/',
-        x       => 'http://example.org/',
+        ex      => 'http://example.org/',
     },
 );
 
@@ -55,8 +55,8 @@ list_is( $b->rels('rdf:type'), [qw(foaf:Organization foaf:Person)], 'rels (rdf:t
 list_is( $b->types, [qw(foaf:Organization foaf:Person)], 'types' );
 list_is( $c->rels('rdf:type'), [], 'rels (rdf:type): 0' );
 
-list_is( $p->revs('rdf:type'), [qw(x:alice x:bob x:dave)], 'revs (rdf:type): 2' );
-list_is( $o->revs('rdf:type'), [qw(x:bob)], 'revs (rdf:type): 1' );
+list_is( $p->revs('rdf:type'), [qw(ex:alice ex:bob ex:dave)], 'revs (rdf:type): 2' );
+list_is( $o->revs('rdf:type'), [qw(ex:bob)], 'revs (rdf:type): 1' );
 
 list_is( $p->rels, [ ], 'rels (empty)' );
 list_is( $a->rels, [qw(rdf:type foaf:knows)], 'rels (2)' );
@@ -65,7 +65,7 @@ list_is( $a->revs, [], 'rels (empty)' );
 list_is( $p->revs, [qw(rdf:type)], 'revs (1)' );
 list_is( $d->revs, [qw(foaf:knows)], 'revs (1)' );
 
-is ( $g->x_foo->dcterms_title->str, "FOO" );
+is ( $g->ex_foo->dcterms_title->str, "FOO" );
 
 # TODO: test rev(foaf_knows_)
 
@@ -74,11 +74,9 @@ is ( $g->x_foo->dcterms_title->str, "FOO" );
 #} );
 #$g->add("<http://uri.gbv.de/database/gvk>", "dcterms:title", $g->literal('Foo') );
 
-
-
 $g = RDF::Lazy->new( namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } );
 $g->add( "<http://example.org/foo>", "foaf:knows", "<http://example.org/baz>" );
-like( $g->turtle, qr{<http://example.org/foo> foaf:knows <http://example.org/baz> .}, 'added triple' );
+like( $g->ttl, qr{<http://example.org/foo> foaf:knows <http://example.org/baz> .}, 'added triple' );
 
 done_testing;
 

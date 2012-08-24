@@ -44,7 +44,7 @@ TURTLE
 
 $graph = RDF::Lazy->new( $rdf, namespaces => {
     foaf => 'http://xmlns.com/foaf/0.1/',
-    'x'   => 'http://example.org/',
+    'ex' => 'http://example.org/',
 });
 
 $a = $graph->resource('http://example.com/"');
@@ -54,7 +54,7 @@ test_tt('[% a.href %]', { a => $a }, 'http://example.com/&quot;', 'escaped URI w
 
 $vars = {
     'a' => $graph->resource('http://example.org/alice'),
-    'b' => $graph->x_bob,
+    'b' => $graph->ex_bob,
 };
 
 test_tt('[% a.foaf_name %]', $vars, 'Alice', 'single literal property');

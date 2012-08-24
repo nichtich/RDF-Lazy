@@ -61,7 +61,7 @@ is $graph->resource('http://example.com/"')->uri, $uri->uri, 'construct via ->re
 
 my $map  = RDF::Trine::NamespaceMap->new({
   foaf => iri('http://xmlns.com/foaf/0.1/'),
-  'x'   => iri('http://example.org/') # empty (default) prefix not supported?
+  'x'   => iri('http://example.org/'),
 });
 my $base = 'http://example.org/';
 my $model = RDF::Trine::Model->new;
@@ -69,6 +69,7 @@ my $parser = RDF::Trine::Parser->new('turtle');
 $parser->parse_into_model( $base, join('',<DATA>), $model );
 
 $graph = RDF::Lazy->new( namespaces => $map, rdf => $model );
+isa_ok( $graph->namespaces, 'RDF::NS' );
 
 my $obj = [ map { "$_" }
         $graph->rel( iri('http://example.org/alice'), 'foaf_knows' )
@@ -83,8 +84,11 @@ is_deeply( "$obj", 'Alice', 'literal object');
 $obj = $a->zonk;
 is_deeply( "$obj", 'foo', 'property with default namespace');
 
-is $graph->uri('x:alice')->uri, 'http://example.org/alice';
-is $graph->x_bob->foaf_name->str, 'Bob', 'chaining accesors';
+isa_ok( $graph->namespaces, 'RDF::NS' );
+
+$graph->{namespaces}->{'ex'} = 'http://example.org/'; # one-letter prefix not allowed in RDF::NS <= 20111031
+is $graph->uri('ex:alice')->uri, 'http://example.org/alice';
+is $graph->ex_bob->foaf_name->str, 'Bob', 'chaining accesors';
 
 is $graph->foaf_name->uri, 'http://xmlns.com/foaf/0.1/name', 'namespace URI';
 is $graph->foaf_foo_bar->uri, 'http://xmlns.com/foaf/0.1/foo_bar', 'namespace URI with _';
@@ -105,7 +109,7 @@ is_deeply( "$obj", 'doz', 'property with filter');
 
 
 # TODO: Test dumper
-my $d = $a->turtle;
+my $d = $a->ttl;
 ok $d, 'has dump';
 
 done_testing;
