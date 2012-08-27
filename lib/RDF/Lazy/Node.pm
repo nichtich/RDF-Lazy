@@ -89,6 +89,8 @@ sub rels { $_[0]->graph->rels( @_ ); }
 sub rev  { $_[0]->graph->rev( @_ ); }
 sub revs { $_[0]->graph->revs( @_ ); }
 
+sub qname { "" };
+
 sub _autoload {
     my $self     = shift;
     my $property = shift;
@@ -175,6 +177,10 @@ Traverse the graph and return all matching subjects.
 =method trine
 
 Returns the underlying L<RDF::Trine::Node>. DO NOT USE THIS METHOD!
+
+=method qname
+
+Returns a qualified string, if possible, or the empty string.
 
 =head1 TRAVERSING THE GRAPH
 

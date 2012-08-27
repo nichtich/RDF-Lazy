@@ -6,6 +6,7 @@ package RDF::Lazy::Resource;
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
 use CGI qw(escapeHTML);
+use Try::Tiny;
 
 use overload '""' => \&str;
 
@@ -31,6 +32,19 @@ sub str {
 *uri  = *str;
 
 *href = *RDF::Lazy::Node::esc;
+
+sub qname {
+    my $self = shift;
+    $self->[1]->{nsprefix} = $self->[1]->{namespaces}->REVERSE
+        unless $self->[1]->{nsprefix};
+    try {
+        my ($ns,$local) = $self->[0]->qname;
+        $ns = $self->[1]->{nsprefix}->{$ns} || return "";
+        return "$ns:$local";
+    } catch { 
+        return ""; 
+    }
+}
 
 1;
 

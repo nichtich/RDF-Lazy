@@ -26,8 +26,14 @@ my $d = $g->resource('http://example.org/dave');
 my $t = $g->uri('rdf:type');
 my $p = $g->uri('foaf:Person');
 my $o = $g->uri('foaf:Organization');
-
 my $x = $g->blank;
+
+# short form
+is $a->qname, 'ex:alice', 'qname';
+is $t->qname, 'rdf:type', 'qname';
+is $g->resource('http://example.com')->qname, '', 'qname (not found)';
+
+# blank nodes
 ok( $x->id, 'blank node' );
 $x = $g->blank('foo');
 is( $x->id, 'foo', 'blank node' );

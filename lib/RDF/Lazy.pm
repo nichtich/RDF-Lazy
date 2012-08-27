@@ -4,7 +4,7 @@ package RDF::Lazy;
 #ABSTRACT: Lazy typing access to RDF data
 
 use RDF::Trine::Model;
-use RDF::NS;
+use RDF::NS qw(20120827);
 use CGI qw(escapeHTML);
 
 use RDF::Trine::Serializer::RDFXML;

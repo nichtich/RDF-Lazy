@@ -1,5 +1,8 @@
 # Change file for RDF::Lazy
 
+0.071  2012-08-27
+    Added qname method
+
 0.07   2012-08-24
     Added support of RDF::NS
 
