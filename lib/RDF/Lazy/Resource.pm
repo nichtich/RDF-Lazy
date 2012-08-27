@@ -35,14 +35,12 @@ sub str {
 
 sub qname {
     my $self = shift;
-    $self->[1]->{nsprefix} = $self->[1]->{namespaces}->REVERSE
-        unless $self->[1]->{nsprefix};
     try {
-        my ($ns,$local) = $self->[0]->qname;
-        $ns = $self->[1]->{nsprefix}->{$ns} || return "";
+        my ($ns,$local) = $self->[0]->qname; # let Trine split
+        $ns = $self->[1]->ns($ns) || return "";
         return "$ns:$local";
-    } catch { 
-        return ""; 
+    } catch {
+        return "";
     }
 }
 
@@ -64,5 +62,10 @@ Alias for method 'str'.
 =method href
 
 Return the HTML-escaped URI value. Alias for method 'esc'.
+
+=method qname
+
+Returns a qualified name (C<prefix:local>) if a mathcing namespace prefix is
+defined. See also method L<RDF::Lazy#ns> for namespace handling.
 
 =cut
