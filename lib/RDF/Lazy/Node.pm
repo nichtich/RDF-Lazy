@@ -55,6 +55,8 @@ sub type {
     }
 }
 
+*a = *type;
+
 sub types {
     my $self = shift;
     $self->rels( $rdf_type );
@@ -140,6 +142,10 @@ Returns the underlying graph L<RDF::Lazy> that the node belongs to.
 
 Returns some rdf:type of the node (if no types are provided) or checks
 whether this node is of any of the provided types.
+
+=method a ( [ @types ] )
+
+Shortcut for C<type>.
 
 =method is ( $check1 [, $check2 ... ] )
 

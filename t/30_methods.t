@@ -47,6 +47,7 @@ is( $a->type->str, $g->foaf_Person->str, 'type eq' );
 ok( $a->type('foaf:Person'), 'a faof:Person' );
 ok( $a->type('foaf:Organization','foaf:Person'), 'a faof:Person' );
 ok( $a->type('foaf:Person','foaf:Organization'), 'a faof:Person' );
+ok( $a->a('foaf:Organization','foaf:Person'), 'a faof:Person' );
 
 my $types = $a->types;
 is( $types->[0]->uri, $g->foaf_Person->uri, 'types' );
