@@ -79,11 +79,11 @@ sub new {
 =method cache( [ $cache ] )
 
 Get and/or set a cache for loading RDF from URIs or URLs. A C<$cache> can be
-any blessed object that supports method C<get($uri)> and C<set($uri,$value)>. 
+any blessed object that supports method C<get($uri)> and C<set($uri,$value)>.
 For instance one can enable a simple file cache with L<CHI> like this:
 
     my $rdf = RDF::Lazy->new(
-        cache => CHI->new( 
+        cache => CHI->new(
             driver => 'File', root_dir => '/tmp/cache',
             expires_in => '1 day'
         )

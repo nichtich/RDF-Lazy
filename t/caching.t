@@ -13,9 +13,9 @@ use RDF::Trine qw(statement iri literal);
 }
 
 my $cache = MyCache->new;
-my $rdf = RDF::Lazy->new( 
-    cache => $cache, 
-    namespaces => { ex => 'http://example.org/' } 
+my $rdf = RDF::Lazy->new(
+    cache => $cache,
+    namespaces => { ex => 'http://example.org/' }
 );
 
 no warnings 'redefine';
