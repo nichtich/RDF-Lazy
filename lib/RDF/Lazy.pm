@@ -3,6 +3,7 @@ use warnings;
 package RDF::Lazy;
 #ABSTRACT: Lazy typing access to RDF data
 
+use v5.10.1;
 use RDF::Trine::Model;
 use RDF::NS qw(20120827);
 use CGI qw(escapeHTML);
@@ -10,6 +11,7 @@ use CGI qw(escapeHTML);
 use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Serializer::RDFJSON;
+use RDF::Trine::Parser;
 
 use RDF::Lazy::Node;
 use Scalar::Util qw(blessed refaddr);
@@ -31,7 +33,8 @@ sub new {
     }
 
     my $namespaces = $args{namespaces} || RDF::NS->new('any');
-    if (blessed($namespaces) and $namespaces->is('RDF::NS')) {
+    if (blessed($namespaces) and $namespaces->isa('RDF::NS')) {
+        # use reference
     } elsif (ref($namespaces)) {
         $namespaces = bless { %$namespaces }, 'RDF::NS';
     } else {
@@ -42,14 +45,28 @@ sub new {
         namespaces => $namespaces,
     }, $class;
 
+    $self->cache( delete $args{cache} ) if $args{cache};
+
     if (blessed $rdf) {
         # add model by reference
         if ($rdf->isa('RDF::Trine::Model')) {
             $self->{model} = $rdf; # model added by reference
         } elsif ($rdf->isa('RDF::Trine::Store')) {
             $self->{model} = RDF::Trine::Model->new($rdf);
+        } elsif($rdf->isa('URI') or $rdf->isa('RDF::Trine::Node::Resource')) {
+            $rdf = $rdf->as_string;
+        } else {
+            $rdf = undef;
         }
     }
+
+    if ($rdf and $rdf =~ /^http:\/\//) {
+        $self->{model} = RDF::Trine::Model->new;
+        $self->load( $rdf );
+    }
+
+    croak 'expected RDF::Trine::Model, RDF::Trine::Store or URI'
+        unless $rdf // 1;
 
     if ( not $self->{model} ) {
         $self->{model} = RDF::Trine::Model->new;
@@ -57,6 +74,70 @@ sub new {
     }
 
     $self;
+}
+
+=method cache( [ $cache ] )
+
+Get and/or set a cache for loading RDF from URIs or URLs. A C<$cache> can be
+any blessed object that supports method C<get($uri)> and C<set($uri,$value)>. 
+For instance one can enable a simple file cache with L<CHI> like this:
+
+    my $rdf = RDF::Lazy->new(
+        cache => CHI->new( 
+            driver => 'File', root_dir => '/tmp/cache',
+            expires_in => '1 day'
+        )
+    );
+
+By default, RDF is stored in Turtle syntax for easy inspection.
+
+=cut
+
+sub cache {
+    my $self = shift;
+    if (@_) {
+        my $c = shift;
+        croak "cache must support 'get' and 'set' methods"
+            unless blessed $c and $c->can('get') and $c->can('set');
+        $self->{cache} = $c;
+    }
+    $self->{cache};
+}
+
+=method load( $uri )
+
+Load RDF from an URI or URL. RDF data is optionally retrieved from a cache.
+Returns the number of triples that have been added (which could be zero if
+all loaded triples are duplicates).
+
+=cut
+
+sub load {
+    my ($self, $uri) = @_;
+
+    my $size = $self->{model}->size;
+
+    if ($self->cache) {
+        my $format = 'Turtle'; # cache must be purged if format changes!
+
+        my $rdf = $self->cache->get( $uri );
+        if ($rdf) {
+            RDF::Trine::Parser->new($format)
+                ->parse_into_model( $uri, $rdf, $self->{model} );
+        } else {
+            my $model = RDF::Trine::Model->new;
+            RDF::Trine::Parser->parse_url_into_model( $uri, $model );
+            $self->{model}->add_iterator( $model->as_stream );
+
+            $rdf = RDF::Trine::Serializer->new($format)
+                ->serialize_model_to_string( $model );
+            $self->cache->set( $uri, $rdf );
+        }
+    } else {
+        RDF::Trine::Parser->parse_url_into_model( $uri, $self->{model} );
+    }
+
+    return ($self->{model}->size - $size);
 }
 
 # method includes parts of RDF::TrineShortcuts::rdf_parse by Toby Inkster
@@ -242,7 +323,7 @@ sub ns {
 
 sub subjects {
     my $self = shift;
-    my ($predicate, $object) = map { $self->uri($_)->trine } @_;
+    my ($predicate, $object) = map { my $self->uri($_)->trine } @_;
     return map { $self->uri($_) } $self->model->subjects( $predicate, $object );
 }
 
@@ -391,13 +472,14 @@ __END__
 
   $g = RDF::Lazy->new( $data, format => 'turtle' );  # parse RDF/Turtle
   $g = RDF::Lazy->new( $data, format => 'rdfxml' );  # parse RDF/XML
+  $g = RDF::Lazy->new( "http://example.org/" );      # retrieve LOD
 
   ### How to get nodes
 
-  $p = $f->resource('http://xmlns.com/foaf/0.1/Person'); # get node
-  $p = $f->uri('<http://xmlns.com/foaf/0.1/Person>');    # alternatively
-  $p = $f->uri('foaf:Person);                            # same but lazier
-  $p = $f->foaf_Person;                                  # same but laziest
+  $p = $g->resource('http://xmlns.com/foaf/0.1/Person'); # get node
+  $p = $g->uri('<http://xmlns.com/foaf/0.1/Person>');    # alternatively
+  $p = $g->uri('foaf:Person);                            # same but lazier
+  $p = $g->foaf_Person;                                  # same but laziest
 
   $l = $g->literal('Alice');              # get literal node
   $l = $g->literal('Alice','en');         # get literal node with language

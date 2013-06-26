@@ -3,7 +3,6 @@ use warnings;
 
 use Test::More;
 use RDF::Lazy;
-use Data::Dumper;
 use utf8;
 
 BEGIN {

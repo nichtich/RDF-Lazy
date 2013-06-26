@@ -46,7 +46,7 @@ sub type {
     if ( @_ ) {
         my $types = $self->rels( $rdf_type ); # TODO use filter?
         foreach ( @_ ) {
-            my $type = $self->graph->uri( $_ );
+            my $type = $self->graph->uri( $_ ) or next;
             return 1 if (grep { $_->str eq $type->str } @$types);
         }
         return 0;

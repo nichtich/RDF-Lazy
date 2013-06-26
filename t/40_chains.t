@@ -5,7 +5,6 @@ use Test::More;
 use RDF::Trine qw(iri literal blank statement);
 use RDF::Trine::NamespaceMap;
 use RDF::Trine::Parser;
-use Data::Dumper;
 
 use RDF::Lazy;
 
