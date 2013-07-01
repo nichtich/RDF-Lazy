@@ -12,14 +12,10 @@ is( $rdf->size, 4, 'rdf data as first parameter' );
 $rdf = RDF::Lazy->new( rdf => $data );
 is( $rdf->str, "4 triples", 'rdf data with named parameter' );
 
-print STDERR "# 'hello'\n";
 my $s = $rdf->uri('"hello"');
-ok( $s->is_literal, 'parse plain literal');
 is( $s->str, "hello", 'parse plain literal' );
 
-print STDERR "# 'hello'\@en\n";
 $s = $rdf->uri('"hello"@en');
-ok( $s->is_literal, 'parse literal');
 is( $s->lang, "en", 'parse literal with language' );
 
 $s = $rdf->uri('true');

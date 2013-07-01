@@ -46,10 +46,10 @@ $graph = RDF::Lazy->new( $rdf, namespaces => {
     'ex' => 'http://example.org/',
 });
 
-$a = $graph->resource('http://example.com/"');
+$a = $graph->resource("http://example.com/'");
 
-test_tt('[% a %]', { a => $a }, 'http://example.com/"', 'plain URI with quot');
-test_tt('[% a.href %]', { a => $a }, 'http://example.com/&quot;', 'escaped URI with quot');
+test_tt('[% a %]', { a => $a }, "http://example.com/'", 'plain URI with apos');
+test_tt('[% a.href %]', { a => $a }, 'http://example.com/&#39;', 'escaped URI with apos');
 
 $vars = {
     'a' => $graph->resource('http://example.org/alice'),

@@ -271,8 +271,6 @@ sub uri {
 
     my ($prefix,$local,$uri);
 
-    print STDERR "# NODE: $node\n";
-
     if ( $node =~ /^<(.*)>$/ ) {
         return RDF::Lazy::Resource->new( $self, $1 );
     } elsif ( $node =~ /^_:(.*)$/ ) {
@@ -280,7 +278,6 @@ sub uri {
     } elsif ( $node =~ /^\[\s*\]$/ ) {
         return RDF::Lazy::Blank->new( $self );
     } elsif ( $node =~ /^["'+-0-9]|^(true|false)$/ ) {
-        print STDERR "# LITERAL\n";
         return $self->_literal( $node );
     } elsif ( $node =~ /^([^:]*):([^:]*)$/ ) {
         ($prefix,$local) = ($1,$2);

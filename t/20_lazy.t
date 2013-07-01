@@ -49,14 +49,14 @@ is RDF::Lazy::Blank->new( $graph, 'x1' )->id, $blank->id, 'blank constructor';
 # TODO: test accessing properties of blank nodes
 
 #diag('resource nodes');
-my $uri = $graph->uri( iri('http://example.com/"') );
+my $uri = $graph->uri( iri("http://example.com/'") );
 isa_ok $uri, 'RDF::Lazy::Resource';
 ok (!$uri->is_literal && $uri->is_resource && !$uri->is_blank, 'is_resource');
-is "$uri", 'http://example.com/"', 'stringify URI';
-is $uri->href, 'http://example.com/&quot;', 'HTML escape URI';
-is $uri->esc,  'http://example.com/&quot;', 'HTML escape URI';
+is "$uri", "http://example.com/'", 'stringify URI';
+is $uri->href, 'http://example.com/&#39;', 'HTML escape URI';
+is $uri->esc,  'http://example.com/&#39;', 'HTML escape URI';
 
-is $graph->resource('http://example.com/"')->uri, $uri->uri, 'construct via ->resource';
+is $graph->resource("http://example.com/'")->uri, $uri->uri, 'construct via ->resource';
 
 my $map  = RDF::Trine::NamespaceMap->new({
   foaf => iri('http://xmlns.com/foaf/0.1/'),
