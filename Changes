@@ -1,5 +1,8 @@
 # Change file for RDF::Lazy
 
+0.081  2013-07-01
+    Fixed bad IRI bug
+
 0.08   2013-06-26
     Experimental support of loading with caching
 
