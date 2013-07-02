@@ -5,9 +5,10 @@ package RDF::Lazy;
 
 use v5.10.1;
 use RDF::Trine::Model;
-use RDF::NS qw(20120827);
+use RDF::NS qw(20130402);
 use CGI qw(escapeHTML);
 
+use RDF::Trine 1.006;
 use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Serializer::RDFJSON;
@@ -19,33 +20,43 @@ use Carp qw(carp croak);
 
 our $AUTOLOAD;
 
-sub str {
-    shift->size . " triples";
-}
+=method new ( [ [ rdf => ] $rdf ] [, %arguments ] )
+
+Create a new RDF graph. Possible arguments include:
+
+=over 4
+
+=item rdf
+
+RDF data can be L<RDF:Trine::Model> or
+L<RDF::Trine::Store>, which are used by reference, or many other forms, as
+supported by L<add|/add>.
+
+=item namespaces
+
+Namespace mapping for abbreviating URIs.
+
+=item cache
+
+Cache for loading RDF from URLs.
+
+=back
+
+=cut
 
 sub new {
     my $class = shift;
     my ($rdf, %args) = (@_ % 2) ? @_ : (undef,@_);
 
+    my $self = bless { }, $class;
+
+    $self->namespaces( delete $args{namespaces} );
+    $self->cache( delete $args{cache} ) if $args{cache};
+
     if (defined $args{rdf}) {
         croak 'Either use first argument or ref => $rdf' if $rdf;
-        $rdf = $args{rdf};
+        $rdf = delete $args{rdf};
     }
-
-    my $namespaces = $args{namespaces} || RDF::NS->new('any');
-    if (blessed($namespaces) and $namespaces->isa('RDF::NS')) {
-        # use reference
-    } elsif (ref($namespaces)) {
-        $namespaces = bless { %$namespaces }, 'RDF::NS';
-    } else {
-        $namespaces = RDF::NS->new($namespaces);
-    }
-
-    my $self = bless {
-        namespaces => $namespaces,
-    }, $class;
-
-    $self->cache( delete $args{cache} ) if $args{cache};
 
     if (blessed $rdf) {
         # add model by reference
@@ -76,6 +87,33 @@ sub new {
     $self;
 }
 
+=method namespaces( [ $namespaces ] )
+
+Get and/or set a namespaces mapping, used for abbreviating URIs.  Namespaces
+can be provided as hash reference, as L<RDF::Trine::NamespaceMap>, or as
+argument to L<RDF::NS>.  The current local version of RDF::NS is used by
+default.
+
+=cut
+
+sub namespaces {
+    my $self = shift;
+
+    if (@_) {
+        my $namespaces = shift // RDF::NS->new('any');
+        if (blessed($namespaces) and $namespaces->isa('RDF::NS')) {
+            # use reference
+        } elsif (ref($namespaces)) {
+            $namespaces = bless { %$namespaces }, 'RDF::NS';
+        } else {
+            $namespaces = RDF::NS->new($namespaces);
+        }
+        $self->{namespaces} = $namespaces;
+    }
+
+    return $self->{namespaces};
+}
+
 =method cache( [ $cache ] )
 
 Get and/or set a cache for loading RDF from URIs or URLs. A C<$cache> can be
@@ -89,7 +127,7 @@ For instance one can enable a simple file cache with L<CHI> like this:
         )
     );
 
-By default, RDF is stored in Turtle syntax for easy inspection.
+By default, RDF is cached serialized in Turtle syntax for easy inspection.
 
 =cut
 
@@ -104,16 +142,22 @@ sub cache {
     $self->{cache};
 }
 
-=method load( $uri )
+=method load( $uri [, %arguments ] )
 
 Load RDF from an URI or URL. RDF data is optionally retrieved from a cache.
-Returns the number of triples that have been added (which could be zero if
-all loaded triples are duplicates).
+Returns the number of triples that have been added (which may be less than the
+number of triples retrieved because of possible duplicates).
+
+This method can also be used as constructor.
 
 =cut
 
 sub load {
-    my ($self, $uri) = @_;
+    my $self = shift;
+    my ($uri, %args) = (@_ % 2) ? @_ : (undef,@_);
+
+    $self = $self->new( undef, %args )
+        unless blessed $self;
 
     my $size = $self->{model}->size;
 
@@ -138,6 +182,11 @@ sub load {
     }
 
     return ($self->{model}->size - $size);
+}
+
+# TODO: document
+sub loadresource {
+    RDF::Lazy::load( @_ )->resource( $_[1] );
 }
 
 # method includes parts of RDF::TrineShortcuts::rdf_parse by Toby Inkster
@@ -210,6 +259,10 @@ sub rel  { shift->_relrev( 0, 'rel', @_  ); }
 sub rev  { shift->_relrev( 0, 'rev', @_  ); }
 sub revs { shift->_relrev( 1, 'rev', @_  ); }
 
+sub str {
+    shift->size . " triples";
+}
+
 sub turtle {
     my $self = shift;
     $self->_serialize(
@@ -227,7 +280,8 @@ sub rdfjson {
 sub rdfxml {
     my $self = shift;
     $self->_serialize(
-        RDF::Trine::Serializer::RDFXML->new( namespaces => $self->{namespaces} ),
+        RDF::Trine::Serializer::RDFXML->new(
+            namespaces => $self->{namespaces} ),
         @_
     );
 }
@@ -241,11 +295,6 @@ sub ttlpre {
 sub resource { RDF::Lazy::Resource->new( @_ ) }
 sub literal  { RDF::Lazy::Literal->new( @_ ) }
 sub blank    { RDF::Lazy::Blank->new( @_ ) }
-
-sub node {
-    carp __PACKAGE__ . '::node is depreciated - use ::uri instead!';
-    uri(@_);
-}
 
 sub uri {
     my ($self,$node) = @_;
@@ -299,10 +348,6 @@ sub uri {
 
     return unless defined $uri;
     return RDF::Lazy::Resource->new( $self, $uri );
-}
-
-sub namespaces {
-    return shift->{namespaces};
 }
 
 sub ns {
@@ -529,14 +574,6 @@ module does not depend on or and can be used independently. Basically, an
 instance of RDF::Lazy contains an unlabeled RDF graph and a set of namespace
 prefixes. For lazy access and graph traversal, each RDF node
 (L<RDF::Lazy::Node>) is tied to the graph.
-
-=method new ( [ [ rdf => ] $rdf ] [, namespaces => $namespaces ] [ %options ])
-
-Return new RDF graph. Namespaces can be provided as hash reference or as
-L<RDF::Trine::NamespaceMap> or L<RDF::NS>. By default, the current local
-version of RDF::NS is used.  RDF data can be L<RDF:Trine::Model> or
-L<RDF::Trine::Store>, which are used by reference, or many other forms, as
-supported by L<add|/add>.
 
 =method resource ( $uri )
 
