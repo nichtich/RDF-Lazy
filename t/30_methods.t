@@ -40,6 +40,8 @@ is( $x->id, 'foo', 'blank node' );
 
 my $y = $g->uri('_:foo');
 is( $x->id, $y->id, 'another blank' );
+is $x->str, '_:foo', 'stringify blank node';
+is $x->qname, '_:foo', 'qname of blank node';
 
 # type
 is( $a->type->uri, $g->foaf_Person->uri, 'type eq' );

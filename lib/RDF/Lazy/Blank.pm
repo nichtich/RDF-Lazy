@@ -28,6 +28,8 @@ sub str {
     '_:'.shift->trine->blank_identifier
 }
 
+*qname = *str;
+
 1;
 
 =head1 DESCRIPTION
@@ -40,6 +42,10 @@ See L<RDF::Lazy::Node> for general node properties.
 Return the local identifier of this node.
 
 =method str
+
+Return the local identifier, prepended by "C<_:>".
+
+=method qname
 
 Return the local identifier, prepended by "C<_:>".
 
