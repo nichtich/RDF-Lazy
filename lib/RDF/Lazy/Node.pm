@@ -209,4 +209,6 @@ in a template is an example of a "RDFPath" language):
     $x->foaf_knows(':')   # any resource
     ...
 
+=encoding utf8
+
 =cut

@@ -43,4 +43,6 @@ Return the local identifier of this node.
 
 Return the local identifier, prepended by "C<_:>".
 
+=encoding utf8
+
 =cut

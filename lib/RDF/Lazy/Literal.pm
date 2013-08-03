@@ -115,4 +115,6 @@ Can also be used to checks whether the datatype matches, for instance:
 
     $node->datatype('xsd:integer','xsd:double');
 
+=encoding utf8
+
 =cut

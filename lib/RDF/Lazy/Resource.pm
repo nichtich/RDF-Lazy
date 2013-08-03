@@ -68,4 +68,6 @@ Return the HTML-escaped URI value. Alias for method 'esc'.
 Returns a qualified name (C<prefix:local>) if a mathcing namespace prefix is
 defined. See also method L<RDF::Lazy#ns> for namespace handling.
 
+=encoding utf8
+
 =cut

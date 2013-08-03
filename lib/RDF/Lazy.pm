@@ -637,4 +637,6 @@ L<RDF::Helper> and L<RDF::TrineShortcuts> provide similar APIs. Another similar 
 for PHP and Python is Graphite: http://graphite.ecs.soton.ac.uk/,
 http://code.google.com/p/python-graphite/.
 
+=encoding utf8
+
 =cut
