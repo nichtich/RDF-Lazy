@@ -5,13 +5,15 @@ use utf8;
 
 use Test::More;
 use RDF::Lazy;
+use RDF::NS;
 
 my $rdf = RDF::Lazy->new;
+my $ns  = RDF::NS->new;
 
 my $s = $rdf->literal;
 is $s->str, '', 'empty string';
-is $s->lang, undef, 'no language tag';
-ok !$s->is('@'), 'no language tag';
+ok !$s->lang && !$s->is('@'), 'no language tag';
+is $s->datatype, undef, 'no datatype';
 
 $s = $rdf->literal('নির্বাণ','bn');
 
@@ -33,5 +35,12 @@ ok $s->is_de_AT_ && $s->is('@de-AT-'), 'de-AT = de_AT';
 ok $s->is_de_  && $s->is('@de-'), 'de-AT ~ de_';
 ok !$s->is_de && !$s->is('@de'), 'de-AT != de';
 
-done_testing;
+$s = $rdf->literal('1','xsd:int');
+is $s->str, '1', 'integer';
+ok !$s->lang && !$s->is('@'), 'no language tag';
+is $s->datatype->str, $ns->xsd_int, 'datatype';
 
+$s = $rdf->literal('true');
+ok !$s->datatype, 'plain literal';
+
+done_testing;

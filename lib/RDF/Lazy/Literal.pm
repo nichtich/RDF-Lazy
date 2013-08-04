@@ -15,23 +15,25 @@ our $LANGTAG = qr/^(([a-z]{2,8}|[a-z]{2,3}-[a-z]{3})(-[a-z0-9_]+)?-?)$/i;
 
 sub new {
     my $class   = shift;
-    my $graph   = shift || RDF::Lazy->new;
+    my $graph   = shift // RDF::Lazy->new;
     my $literal = shift // "";
+    my $kind    = shift;
 
-    my ($language, $datatype) = @_;
+    # TODO: why allow passing trine objects?
+    unless( blessed($literal) and $literal->isa('RDF::Trine::Node::Literal') ) {
+        my ($language, $datatype);
 
-    if (defined $language) {
-        if ($language =~ $LANGTAG) {
-            $datatype = undef;
-        } elsif( not defined $datatype ) {
-            $datatype = $graph->uri($language)->trine;
-            $language = undef;
+        if (defined $kind) {
+            if ($kind =~ $LANGTAG) {
+                ($language, $datatype) = ($kind);
+            } else {
+                ($language, $datatype) = (undef,$graph->uri($kind)->trine);
+            }
         }
-    }
 
-    $literal = RDF::Trine::Node::Literal->new( $literal, $language, $datatype )
-        unless blessed($literal) and $literal->isa('RDF::Trine::Node::Literal');
-    return unless defined $literal;
+        # TODO: may croak?
+        $literal = RDF::Trine::Node::Literal->new( $literal, $language, $datatype );
+    }
 
     return bless [ $literal, $graph ], $class;
 }

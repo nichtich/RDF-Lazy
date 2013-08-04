@@ -3,7 +3,7 @@ use warnings;
 package RDF::Lazy;
 #ABSTRACT: Lazy typing access to RDF data
 
-use v5.10.1;
+use v5.10;
 use RDF::Trine::Model;
 use RDF::NS qw(20130402);
 use CGI qw(escapeHTML);
@@ -15,6 +15,10 @@ use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Parser;
 
 use RDF::Lazy::Node;
+use RDF::Lazy::Literal;
+use RDF::Lazy::Blank;
+use RDF::Lazy::Resource;
+
 use Scalar::Util qw(blessed refaddr);
 use Carp qw(carp croak);
 
@@ -409,25 +413,25 @@ my $r_string2  = qr'^"(.*)"(\@([a-z]+(-[a-z0-9]+)*))?$'i;
 sub _literal {
     my ($self, $s) = @_;
 
-    my ($literal, $language, $datatype);
+    my ($literal, $language_or_datatype);
 
     if ( $s =~ $r_string1 or $s =~ $r_string2 ) {
-        ($literal, $language) = ($1,$3);
+        ($literal, $language_or_datatype) = ($1,$3);
     } elsif( $s =~ $r_double ) {
         $literal = $s;
-        $datatype = $xsd->double;
+        $language_or_datatype = $xsd->double;
     } elsif( $s =~ $r_decimal ) {
         $literal = $s;
-        $datatype = $xsd->decimal;
+        $language_or_datatype = $xsd->decimal;
     } elsif( $s =~ $r_integer ) {
         $literal = $s;
-        $datatype = $xsd->integer;
+        $language_or_datatype = $xsd->integer;
     } elsif( $s =~ $r_boolean ) {
         $literal = $s;
-        $datatype = $xsd->boolean;
+        $language_or_datatype = $xsd->boolean;
     }
 
-    return $self->literal( $literal, $language, $datatype );
+    return $self->literal( $literal, $language_or_datatype );
 }
 
 sub _query {
@@ -582,7 +586,7 @@ Return L<RDF::Lazy::Resource> node. The following statements are equivalent:
     $graph->resource('http://example.org');
     $graph->uri('<http://example.org>');
 
-=method literal ( $string , $language_or_datatype, $datatype )
+=method literal ( [ $string [, $language_or_datatype ] )
 
 Return L<RDF::Lazy::Literal> node.
 

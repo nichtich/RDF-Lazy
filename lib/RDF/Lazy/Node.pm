@@ -11,9 +11,6 @@ L<RDF::Lazy::Literal>, L<RDF::Lazy::Resource>, and L<RDF::Lazy::Blank>.
 
 =cut
 
-use RDF::Lazy::Literal;
-use RDF::Lazy::Resource;
-use RDF::Lazy::Blank;
 use RDF::Trine qw(iri);
 use CGI qw(escapeHTML);
 use Carp qw(carp);

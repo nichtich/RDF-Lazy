@@ -20,17 +20,7 @@ is $lit->type, undef, 'untyped literal';
 
 is $graph->literal("Geek & Poke")->str, $lit->str, 'construct via ->literal';
 
-#diag('language tags');
-my $l1 = $graph->literal("bill","en-GB");
-my $l2 = $graph->literal("check","en-US");
-is "$l1", "bill", 'literal with language code';
-is $l1->lang, 'en-gb';
-is $l2->lang, 'en-us';
-ok $l1->is_en_gb && !$l2->is_en_gb, 'is_en_gb';
-ok !$l1->is_en_us && $l2->is_en_us, 'is_en_us';
-ok $l1->is_en_ && $l2->is_en_ && !$l1->is_en, 'is_en_';
-ok $l1->is('@') && $l1->is('@en-'), 'is(...)';
-
+my ($l1, $l2);
 $l1 = $graph->literal("love","en");
 ok $l1->is_en && $l1->is_en_, 'is_en_ and is_en';
 
