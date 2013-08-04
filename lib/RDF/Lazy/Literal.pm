@@ -3,9 +3,10 @@ use warnings;
 package RDF::Lazy::Literal;
 #ABSTRACT: Literal node in a RDF::Lazy graph
 
+use v5.10;
+
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
-use CGI qw(escapeHTML);
 
 use overload '""' => sub { shift->str; };
 
@@ -15,7 +16,7 @@ our $LANGTAG = qr/^(([a-z]{2,8}|[a-z]{2,3}-[a-z]{3})(-[a-z0-9_]+)?-?)$/i;
 sub new {
     my $class   = shift;
     my $graph   = shift || RDF::Lazy->new;
-    my $literal = shift;
+    my $literal = shift // "";
 
     my ($language, $datatype) = @_;
 
@@ -41,18 +42,22 @@ sub str {
 
 sub lang {
     my $self = shift;
-    my $lang = $self->trine->literal_value_language;
-    return $lang if not @_ or not $lang;
+    my $lang = $self->trine->literal_value_language || return;
 
-    my $xxx = shift || "";
-    $xxx =~ s/_/-/g;
-    return unless $xxx =~ $LANGTAG;
+    if (@_) {
+        my $pattern = shift || "";
+        $pattern =~ s/_/-/g;
+        return unless $pattern =~ $LANGTAG;
 
-    if ( $xxx eq "$lang" or $xxx =~ s/-$// and index($lang, $xxx) == 0 ) {
-        return $lang;
+        $pattern =~ s/-$/(-.+)?/;
+
+        return if $lang !~ qr/^$pattern$/i;
     }
 
-    return;
+    # ISO 3166 recommends that country codes are capitalized
+    $lang =~ s/-([^-]+)/'-'.uc($1)/e;
+
+    return $lang;
 }
 
 sub datatype {
@@ -75,9 +80,7 @@ sub _autoload {
     return unless $method =~ /^is_(.+)$/;
 
     # We assume that no language is named 'blank', 'literal', or 'resource'
-    return 1 if $self->lang($1);
-
-    return;
+    return $self->lang($1);
 }
 
 1;
@@ -110,7 +113,7 @@ Return whether this node matches a given language tag, for instance
 
 =method datatype ( [ @types ] )
 
-Return the datatype (as L<RDF::Lazy::Resource>, if this node has one.
+Return the datatype (as L<RDF::Lazy::Resource>), if this node has one.
 Can also be used to checks whether the datatype matches, for instance:
 
     $node->datatype('xsd:integer','xsd:double');

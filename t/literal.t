@@ -1,0 +1,37 @@
+use strict;
+use warnings;
+use v5.10;
+use utf8;
+
+use Test::More;
+use RDF::Lazy;
+
+my $rdf = RDF::Lazy->new;
+
+my $s = $rdf->literal;
+is $s->str, '', 'empty string';
+is $s->lang, undef, 'no language tag';
+ok !$s->is('@'), 'no language tag';
+
+$s = $rdf->literal('নির্বাণ','bn');
+
+is "$s", 'নির্বাণ', 'literal with language tag';
+is $s->lang, 'bn', 'language tag';
+is $s->datatype, undef, 'datatype';
+ok $s->is_bn, 'bn = bn';
+ok $s->is_bn_, 'bn ~ bn_';
+ok !$s->is_bn_IN, 'bn != bn-IN';
+ok !$s->is_en, 'bn != en';
+
+$s = $rdf->literal('Sessel','de-AT');
+is $s->str, 'Sessel';
+is $s->lang, 'de-AT', 'de-AT';
+ok $s->is('@'), 'has language tag';
+ok $s->is_de_AT && $s->is('@de-AT'), 'de-AT = de_AT';
+ok $s->is_de_at && $s->is('@de-at'), 'de-AT = de_at';
+ok $s->is_de_AT_ && $s->is('@de-AT-'), 'de-AT = de_AT';
+ok $s->is_de_  && $s->is('@de-'), 'de-AT ~ de_';
+ok !$s->is_de && !$s->is('@de'), 'de-AT != de';
+
+done_testing;
+
