@@ -1,5 +1,8 @@
 # Change file for RDF::Lazy
 
+0.09   2013-10-02
+    Refactoring
+
 0.081  2013-07-01
     Fixed bad IRI bug
 
