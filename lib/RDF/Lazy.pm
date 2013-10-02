@@ -6,7 +6,6 @@ package RDF::Lazy;
 use v5.10;
 use RDF::Trine::Model;
 use RDF::NS qw(20130402);
-use CGI qw(escapeHTML);
 
 use RDF::Trine 1.006;
 use RDF::Trine::Serializer::RDFXML;
@@ -291,7 +290,7 @@ sub rdfxml {
 
 sub ttlpre {
     return '<pre class="turtle">'
-        . escapeHTML( "# " . ($_[0]->str||'') . "\n" . turtle(@_) )
+        . RDF::Lazy::Node::escapeHTML( "# " . ($_[0]->str||'') . "\n" . turtle(@_) )
         . '</pre>';
 }
 
@@ -343,7 +342,7 @@ sub uri {
 
     $prefix = "" unless defined $prefix;
 #    if (defined $prefix) {
-        $uri = $self->{namespaces}->URI("$prefix:$local");
+        $uri = $self->namespaces->URI("$prefix:$local");
  #   } else {
   #      # Bug in RDF::Trine::NamespaceMap, line 133 - wait until fixed
    #     # $predicate = $self->{namespaces}->uri(":$local");
@@ -436,7 +435,7 @@ sub _literal {
 }
 
 sub _query {
-    my ($self,$all,$dir,$subject,$property,@filter) = @_;
+    my ($self,$all,$direction,$subject,$property,@filter) = @_;
 
     $subject = $self->uri($subject)
         unless blessed($subject) and $subject->isa('RDF::Lazy::Node');
@@ -446,9 +445,9 @@ sub _query {
 
     my @res;
 
-    if ($dir eq 'rel') {
+    if ($direction eq 'rel') {
         @res = $self->{model}->objects( $subject->trine, $property );
-    } elsif ($dir eq 'rev') {
+    } elsif ($direction eq 'rev') {
         @res = $self->{model}->subjects( $property, $subject->trine );
     }
 
@@ -461,16 +460,17 @@ sub _query {
 }
 
 sub _relrev {
-    my $self    = shift;
-    my $all     = shift;
-    my $type    = shift;
-    my $subject = shift;
+    my $self      = shift;
+    my $all       = shift;
+    my $direction = shift;
+    my $subject   = shift;
 
     if (@_) {
         # get objects / subjects
-        my ($property,@filter) = @_;
+        my ($property, @filter) = @_;
         $all = 1 if ($property and not ref $property and $property =~ s/^(.+[^_])_$/$1/);
-        return $self->_query( $all, $type, $subject, $property, @filter );
+
+        return $self->_query( $all, $direction, $subject, $property, @filter );
     } else {
         # get all predicates
         $subject = $self->uri($subject)
@@ -478,9 +478,9 @@ sub _relrev {
 
         my @res;
 
-        if ($type eq 'rel') {
+        if ($direction eq 'rel') {
             @res = $self->{model}->predicates( $subject->trine, undef );
-        } elsif ($type eq 'rev') {
+        } elsif ($direction eq 'rev') {
             @res = $self->{model}->predicates( undef, $subject->trine );
         }
 

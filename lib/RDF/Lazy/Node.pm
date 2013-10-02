@@ -12,7 +12,6 @@ L<RDF::Lazy::Literal>, L<RDF::Lazy::Resource>, and L<RDF::Lazy::Blank>.
 =cut
 
 use RDF::Trine qw(iri);
-use CGI qw(escapeHTML);
 use Carp qw(carp);
 
 our $AUTOLOAD;
@@ -46,7 +45,7 @@ sub type {
             my $type = $self->graph->uri( $_ ) or next;
             return 1 if (grep { $_->str eq $type->str } @$types);
         }
-        return 0;
+        return;
     } else {
         $self->rel( RDF_TYPE );
     }
@@ -85,8 +84,6 @@ sub rels { $_[0]->graph->rels( @_ ); }
 sub rev  { $_[0]->graph->rev( @_ ); }
 sub revs { $_[0]->graph->revs( @_ ); }
 
-sub qname { "" };
-
 sub _autoload {
     my $self     = shift;
     my $property = shift;
@@ -94,6 +91,15 @@ sub _autoload {
     return $self->rel( $property, @_ );
 }
 
+sub escapeHTML {
+    my ($html) = @_;
+    $html =~ s/&/&amp;/gs;
+    $html =~ s/</&lt;/gs;
+    $html =~ s/>/&gt;/gs;
+    $html =~ s/"/&#34;/gs;
+    $html =~ s/'/&#39;/gs;
+    $html;
+}
 1;
 
 __END__

@@ -65,10 +65,11 @@ sub lang {
 sub datatype {
     my $self = shift;
     my $type = $self->graph->resource( $self->trine->literal_datatype );
+
     return $type unless @_ and $type;
 
-    foreach my $t (@_) {
-        $t = $self->graph->uri( $t );
+    foreach (@_) {
+        my $t = $self->graph->uri( $_ );
         return 1 if $t->is_resource and $t eq $type;
     }
 
