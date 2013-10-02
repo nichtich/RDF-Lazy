@@ -16,17 +16,17 @@ use CGI qw(escapeHTML);
 use Carp qw(carp);
 
 our $AUTOLOAD;
-our $rdf_type = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+use constant RDF_TYPE => iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 
-sub trine { shift->[0]; }
-sub graph { shift->[1]; }
-sub esc { escapeHTML( shift->str ) }
+sub trine { $_[0]->[0]; }
+sub graph { $_[0]->[1]; }
+sub esc { escapeHTML( $_[0]->str ) }
 
-sub is_literal  { shift->[0]->is_literal; }
-sub is_resource { shift->[0]->is_resource; }
+sub is_literal  { $_[0]->[0]->is_literal; }
+sub is_resource { $_[0]->[0]->is_resource; }
 *is_uri = *is_resource;
 
-sub is_blank    { shift->[0]->is_blank; }
+sub is_blank    { $_[0]->[0]->is_blank; }
 
 sub AUTOLOAD {
     my $self = shift;
@@ -41,23 +41,20 @@ sub AUTOLOAD {
 sub type {
     my $self = shift;
     if ( @_ ) {
-        my $types = $self->rels( $rdf_type ); # TODO use filter?
+        my $types = $self->rels( RDF_TYPE ); # TODO use filter?
         foreach ( @_ ) {
             my $type = $self->graph->uri( $_ ) or next;
             return 1 if (grep { $_->str eq $type->str } @$types);
         }
         return 0;
     } else {
-        $self->rel( $rdf_type );
+        $self->rel( RDF_TYPE );
     }
 }
 
 *a = *type;
 
-sub types {
-    my $self = shift;
-    $self->rels( $rdf_type );
-}
+sub types { $_[0]->rels( RDF_TYPE ); }
 
 sub is {
     my $self = shift;

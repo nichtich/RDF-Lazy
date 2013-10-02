@@ -8,7 +8,7 @@ use v5.10;
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
 
-use overload '""' => sub { shift->str; };
+use overload '""' => \&str;
 
 # not very strict check for language tag look-alikes (see www.langtag.net)
 our $LANGTAG = qr/^(([a-z]{2,8}|[a-z]{2,3}-[a-z]{3})(-[a-z0-9_]+)?-?)$/i;
@@ -39,7 +39,7 @@ sub new {
 }
 
 sub str {
-    shift->trine->literal_value
+    $_[0]->trine->literal_value
 }
 
 sub lang {
@@ -76,8 +76,7 @@ sub datatype {
 }
 
 sub _autoload {
-    my $self   = shift;
-    my $method = shift;
+    my ($self, $method) = @_;
 
     return unless $method =~ /^is_(.+)$/;
 
@@ -89,8 +88,9 @@ sub _autoload {
 
 =head1 DESCRIPTION
 
-You should not directly create instances of this class.
-See L<RDF::Lazy::Node> for general node properties.
+L<RDF::Lazy::Blank> represents a literal node in a L<RDF::Lazy> RDF graph. Do
+not use the constructor of this class but factory methods of L<RDF::Lazy>.
+General RDF node methods are derived from L<RDF::Lazy::Node>.
 
 =method str
 
@@ -115,8 +115,9 @@ Return whether this node matches a given language tag, for instance
 
 =method datatype ( [ @types ] )
 
-Return the datatype (as L<RDF::Lazy::Resource>), if this node has one.
-Can also be used to checks whether the datatype matches, for instance:
+Return the datatype (as L<RDF::Lazy::Resource>), if this node has one. Can also
+be used to check whether the datatype matches to a given list of datatypes, for
+instance:
 
     $node->datatype('xsd:integer','xsd:double');
 

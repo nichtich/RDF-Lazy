@@ -11,9 +11,15 @@ use_ok 'RDF::Lazy';
 my $graph = RDF::Lazy->new;
 isa_ok $graph, 'RDF::Lazy';
 
+$graph = RDF::Lazy->new( undef );
+isa_ok $graph, 'RDF::Lazy';
+is $graph->size, 0, 'empty graph';
+
 my $lit = $graph->uri( literal("Geek & Poke") );
 isa_ok $lit, 'RDF::Lazy::Literal';
-ok ($lit->is_literal && !$lit->is_resource && !$lit->is_blank, 'is_literal');
+isa_ok $lit->graph, 'RDF::Lazy', '->graph';
+
+ok ($lit->is_literal && !$lit->is_resource && !$lit->is_blank, '->is_literal');
 is $lit->str, 'Geek & Poke', 'stringify literal';
 is $lit->esc, 'Geek &amp; Poke', 'HTML escape literal';
 is $lit->type, undef, 'untyped literal';
@@ -96,10 +102,13 @@ is_deeply( "$obj", 'bar', 'property with filter');
 $obj = $a->zonk('@en','');
 is_deeply( "$obj", 'doz', 'property with filter');
 
+my $ttl = $a->ttl;
+ok $ttl, '->ttl';
 
-# TODO: Test dumper
-my $d = $a->ttl;
-ok $d, 'has dump';
+#use RDF::NS;
+$a->graph->namespaces( RDF::NS->new );
+#note explain $a->graph->namespaces;
+#is $a->ttl, $ttl, 'namespaces';
 
 done_testing;
 

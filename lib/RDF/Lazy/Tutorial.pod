@@ -6,7 +6,7 @@
 
 =head1 A short introduction to RDF::Lazy as RDF templating system
 
-=head2 Three kinds of nodes
+=head2 Nodes
 
 The basic object in RDF::Lazy is a node (L<RDF::Lazy::Node>). A node represents
 an RDF node in an RDF graph. Every nody can be stringified to its value:
@@ -51,7 +51,7 @@ C<esc> to HTML/XML-escape the stringified node value:
     [% x.esc %]                            Template Toolkit syntax
     {$x->esc} or {$x.esc}                  Smarty syntax
 
-=head2 No nodes without graph
+=head2 Graphs
 
 Each node in RDF::Lazy belongs to a particular RDF graph (L<RDF::Lazy>). You
 can access a node's graph by its C<graph> method, if needed. Graphs have some
@@ -69,8 +69,6 @@ Turtle syntax. The latter wraps and escapes Turtle for HTML output:
 For instance you can show the number of triples in a node's graph like this:
 
     <p>The node's graph contains [% x.graph.size %] triples.</p>
-
-=head2 Traversing the graph
 
 One can traverse the RDF graph from any node. For instance, given a
 C<foaf:Person> node, one can get another resource linked via C<foaf:knows>: 

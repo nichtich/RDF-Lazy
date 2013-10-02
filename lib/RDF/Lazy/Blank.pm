@@ -9,23 +9,24 @@ use Scalar::Util qw(blessed);
 use overload '""' => \&str;
 
 sub new {
-    my $class = shift;
-    my $graph = shift || RDF::Lazy->new;
-    my $blank = shift;
+    my ($class, $graph, $blank) = @_;
 
     $blank = RDF::Trine::Node::Blank->new( $blank )
         unless blessed($blank) and $blank->isa('RDF::Trine::Node::Blank');
     return unless defined $blank;
 
-    return bless [ $blank, $graph ], $class;
+    bless [ 
+        $blank, 
+        $graph || RDF::Lazy->new 
+    ], $class;
 }
 
 sub id {
-    shift->trine->blank_identifier
+    $_[0]->trine->blank_identifier
 }
 
 sub str {
-    '_:'.shift->trine->blank_identifier
+    '_:'.$_[0]->trine->blank_identifier
 }
 
 *qname = *str;
@@ -34,18 +35,19 @@ sub str {
 
 =head1 DESCRIPTION
 
-You should not directly create instances of this class.
-See L<RDF::Lazy::Node> for general node properties.
+L<RDF::Lazy::Blank> represents a blank node in a L<RDF::Lazy> RDF graph. Do not
+use the constructor of this class but factory methods of L<RDF::Lazy>. General
+RDF node methods are derived from L<RDF::Lazy::Node>.
 
 =method id
 
 Return the local identifier of this node.
 
-=method str
+=method qname
 
 Return the local identifier, prepended by "C<_:>".
 
-=method qname
+=method str
 
 Return the local identifier, prepended by "C<_:>".
 

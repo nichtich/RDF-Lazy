@@ -11,9 +11,7 @@ use Try::Tiny;
 use overload '""' => \&str;
 
 sub new {
-    my $class    = shift;
-    my $graph    = shift || RDF::Lazy->new;
-    my $resource = shift;
+    my ($class, $graph, $resource) = @_;
 
     return unless defined $resource;
 
@@ -22,11 +20,14 @@ sub new {
         return unless defined $resource;
     }
 
-    return bless [ $resource, $graph ], $class;
+    bless [ 
+        $resource,
+        $graph || RDF::Lazy->new
+    ], $class;
 }
 
 sub str {
-    shift->trine->uri_value;
+    $_[0]->trine->uri_value;
 }
 
 *uri  = *str;
@@ -34,7 +35,8 @@ sub str {
 *href = *RDF::Lazy::Node::esc;
 
 sub qname {
-    my $self = shift;
+    my ($self) = @_;
+
     try {
         my ($ns,$local) = $self->[0]->qname; # let Trine split
         $ns = $self->[1]->ns($ns) || return "";
@@ -48,8 +50,9 @@ sub qname {
 
 =head1 DESCRIPTION
 
-You should not directly create instances of this class.
-See L<RDF::Lazy::Node> for general node properties.
+L<RDF::Lazy::Resource> represents an URI references in a L<RDF::Lazy> RDF
+graph. Do not use the constructor of this class but factory methods of
+L<RDF::Lazy>. General RDF node methods are derived from L<RDF::Lazy::Node>.
 
 =method str
 

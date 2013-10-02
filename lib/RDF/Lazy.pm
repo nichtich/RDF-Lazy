@@ -13,7 +13,6 @@ use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Parser;
-
 use RDF::Lazy::Node;
 use RDF::Lazy::Literal;
 use RDF::Lazy::Blank;
@@ -163,7 +162,7 @@ sub load {
     $self = $self->new( undef, %args )
         unless blessed $self;
 
-    my $size = $self->{model}->size;
+    my $size = $self->size;
 
     if ($self->cache) {
         my $format = 'Turtle'; # cache must be purged if format changes!
@@ -185,7 +184,7 @@ sub load {
         RDF::Trine::Parser->parse_url_into_model( $uri, $self->{model} );
     }
 
-    return ($self->{model}->size - $size);
+    return ($self->size - $size);
 }
 
 # TODO: document
@@ -264,7 +263,7 @@ sub rev  { shift->_relrev( 0, 'rev', @_  ); }
 sub revs { shift->_relrev( 1, 'rev', @_  ); }
 
 sub str {
-    shift->size . " triples";
+    $_[0]->size . " triples";
 }
 
 sub turtle {
@@ -278,7 +277,7 @@ sub turtle {
 *ttl = *turtle;
 
 sub rdfjson {
-    shift->_serialize( RDF::Trine::Serializer::RDFJSON->new, @_ );
+    $_[0]->_serialize( RDF::Trine::Serializer::RDFJSON->new, @_ );
 }
 
 sub rdfxml {
@@ -301,14 +300,18 @@ sub literal  { RDF::Lazy::Literal->new( @_ ) }
 sub blank    { RDF::Lazy::Blank->new( @_ ) }
 
 sub uri {
-    my ($self,$node) = @_;
-    return unless defined $node;
+    my ($self, $node) = @_;
 
+    return unless defined $node;
     if (blessed $node) {
         if ($node->isa('RDF::Lazy::Node')) {
             # copy from another or from this graph
             # return $node if refaddr($node->graph) eq refaddr($self);
-            $node = $self->trine;
+            if (!$node->trine) {
+                use Data::Dumper;
+                croak Dumper($node);
+            }
+            $node = $node->trine;
         }
         if ($node->isa('RDF::Trine::Node::Resource')) {
             return RDF::Lazy::Resource->new( $self, $node );
@@ -316,10 +319,8 @@ sub uri {
             return RDF::Lazy::Literal->new( $self, $node );
         } elsif ($node->isa('RDF::Trine::Node::Blank')) {
             return RDF::Lazy::Blank->new( $self, $node );
-        } else {
-            carp 'Cannot create RDF::Lazy::Node from ' . ref($node);
-            return;
         }
+        carp 'Cannot create RDF::Lazy::Node from ' . ref($node);
     }
 
     my ($prefix,$local,$uri);
@@ -512,7 +513,7 @@ __END__
 
   $g = RDF::Lazy->new(
      rdf        => $data,    # RDF::Trine::Model or ::Store (by reference)
-     namespaces => {         # namespace prefix, RDF::NS or RDF::Trine::NamespaceMap
+     namespaces => ''        # RDF::NS{         # namespace prefix, RDF::NS or RDF::Trine::NamespaceMap
          foaf => 'http://xmlns.com/foaf/0.1/',
          rdf  => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
          xsd  => "http://www.w3.org/2001/XMLSchema#",
@@ -572,12 +573,12 @@ __END__
 
 =head1 DESCRIPTION
 
-This module wraps L<RDF::Trine::Node> to provide simple node-centric access to
-RDF data. It was designed to access RDF within L<Template> Toolkit but the
-module does not depend on or and can be used independently. Basically, an
-instance of RDF::Lazy contains an unlabeled RDF graph and a set of namespace
-prefixes. For lazy access and graph traversal, each RDF node
-(L<RDF::Lazy::Node>) is tied to the graph.
+This module wraps L<RDF::Trine::Model> and L<RDF::Trine::Node> to provide
+simple node-centric access to RDF data. It was designed to access RDF within
+L<Template> Toolkit but the module does not depend on or and can be used
+independently. Basically, an instance of RDF::Lazy contains an unlabeled RDF
+graph and a set of namespace prefixes. For lazy access and graph traversal,
+each RDF node (L<RDF::Lazy::Node>) is tied to the graph.
 
 =method resource ( $uri )
 
@@ -634,6 +635,10 @@ makes use of popular namespaces defined in L<RDF::NS>.
    $g->ns('dc');   # returns 'http://purl.org/dc/elements/1.1/'
    $g->ns('http://purl.org/dc/elements/1.1/');  # returns 'dc'
    $g->ns( dc => 'http://example.org/' );       # modify mapping
+
+=method size
+
+Returns the number of triples in the underlying RDF graph.
 
 =head1 SEE ALSO
 
