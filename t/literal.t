@@ -8,7 +8,7 @@ use RDF::Lazy;
 use RDF::NS;
 
 my $rdf = RDF::Lazy->new;
-my $ns  = RDF::NS->new;
+use constant NS => RDF::NS->new;
 
 my $s = $rdf->literal;
 is $s->str, '', 'empty string';
@@ -38,7 +38,9 @@ ok !$s->is_de && !$s->is('@de'), 'de-AT != de';
 $s = $rdf->literal('1','xsd:int');
 is $s->str, '1', 'integer';
 ok !$s->lang && !$s->is('@'), 'no language tag';
-is $s->datatype->str, $ns->xsd_int, 'datatype';
+is $s->datatype->str, NS->xsd_int, 'datatype';
+ok $s->datatype('xsd:int'), 'datatype';
+ok $s->datatype(NS->xsd_float,NS->xsd_int), 'datatype';
 
 $s = $rdf->literal('true');
 ok !$s->datatype, 'plain literal';

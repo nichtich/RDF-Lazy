@@ -5,7 +5,7 @@ package RDF::Lazy;
 
 use v5.10;
 use RDF::Trine::Model;
-use RDF::NS qw(20130402);
+use RDF::NS 20131002;
 
 use RDF::Trine 1.006;
 use RDF::Trine::Serializer::RDFXML;
@@ -36,7 +36,8 @@ supported by L<add|/add>.
 
 =item namespaces
 
-Namespace mapping for abbreviating URIs.
+Namespace mapping for abbreviating URIs. See method C<ns> for access to the
+namespace mapping.
 
 =item cache
 
@@ -324,7 +325,7 @@ sub uri {
 
     my ($prefix,$local,$uri);
 
-    if ( $node =~ /^<(.*)>$/ ) {
+    if ( $node =~ /^<(.*)>$/ or $node =~ qr{^(http://.+)$} ) {
         return RDF::Lazy::Resource->new( $self, $1 );
     } elsif ( $node =~ /^_:(.*)$/ ) {
         return RDF::Lazy::Blank->new( $self, $1 );
@@ -341,14 +342,7 @@ sub uri {
     }
 
     $prefix = "" unless defined $prefix;
-#    if (defined $prefix) {
-        $uri = $self->namespaces->URI("$prefix:$local");
- #   } else {
-  #      # Bug in RDF::Trine::NamespaceMap, line 133 - wait until fixed
-   #     # $predicate = $self->{namespaces}->uri(":$local");
-    #    my $ns = $self->{namespaces}->namesespace_uri("");
-     #   $uri = $ns->uri($local) if defined $ns;
-    #}
+    $uri = $self->namespaces->URI("$prefix:$local");
 
     return unless defined $uri;
     return RDF::Lazy::Resource->new( $self, $uri );
@@ -359,15 +353,31 @@ sub ns {
     return unless @_;
 
     if (@_ == 2) { # set
-        $self->{namespaces}->{$_[0]} = $_[1];
-        $self->{nsprefix}->{$_[1]} = $_[0] if $self->{nsprefix};
+        if ( $self->namespaces->SET( $_[0] => $_[1], 1 ) ) {
+            # TODO: will only work in RDF::NS > 
+            $self->{nsreverse} = undef;
+        }
+#        $self->{namespaces}->{$_[0]} = $_[1];
+#        $self->{nsprefix}->{$_[1]} = $_[0] if $self->{nsprefix};
         return;
     }
-    return $self->{namespaces}->{$_[0]}
-        if $_[0] !~ ':'; # get namespace
-    $self->{nsprefix} = $self->{namespaces}->REVERSE
-        unless $self->{nsprefix};
-    return $self->{nsprefix}->{$_[0]};
+
+    # TODO: move to RDF::NS
+    my $lookup = shift || return;
+    if ( $lookup =~ qr{^https?://} ) {
+        $self->{nsreverse} ||= $self->namespaces->REVERSE;
+        return $self->{nsreverse}->{$lookup};
+    } elsif ( $lookup =~ /:/ ) {
+        return $self->namespaces->URI($lookup);
+    } else {
+        return $self->namespaces->{$lookup};
+    }
+
+    #return $self->{namespaces}->{$_[0]}
+    #    if $_[0] !~ ':'; # get namespace
+    #$self->{nsprefix} = $self->{namespaces}->REVERSE
+    #    unless $self->{nsprefix};
+    #return $self->{nsprefix}->{$_[0]};
 }
 
 sub subjects {
@@ -440,7 +450,9 @@ sub _query {
     $subject = $self->uri($subject)
         unless blessed($subject) and $subject->isa('RDF::Lazy::Node');
 
-    $property = $self->uri($property) if defined $property;
+    if ( defined $property ) {
+        $property = $self->uri($property) or return;
+    }
     $property = $property->trine if defined $property;
 
     my @res;
@@ -629,8 +641,8 @@ description, wrapped in a HTML C<< <pre class="turtle"> >> element.
 
 =method ns ( $prefix | $namespace | $prefix => $namespace )
 
-Gets or sets a namespace mapping for the entire graph. By default, RDF::Lazy
-makes use of popular namespaces defined in L<RDF::NS>.
+Gets or set a namespace mapping for the entire graph. By default, RDF::Lazy is
+used.
 
    $g->ns('dc');   # returns 'http://purl.org/dc/elements/1.1/'
    $g->ns('http://purl.org/dc/elements/1.1/');  # returns 'dc'

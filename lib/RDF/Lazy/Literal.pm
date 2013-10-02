@@ -70,7 +70,7 @@ sub datatype {
 
     foreach (@_) {
         my $t = $self->graph->uri( $_ );
-        return 1 if $t->is_resource and $t eq $type;
+        return 1 if $t->is_resource and "$t" eq "$type";
     }
 
     return;

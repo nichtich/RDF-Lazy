@@ -49,6 +49,7 @@ is( $a->type->str, $g->foaf_Person->str, 'type eq' );
 ok( $a->type('foaf:Person'), 'a faof:Person' );
 ok( $a->type('foaf:Organization','foaf:Person'), 'a faof:Person' );
 ok( $a->type('foaf:Person','foaf:Organization'), 'a faof:Person' );
+ok( !$a->type('foaf:Organization'), 'not a foaf:Organization');
 ok( $a->a('foaf:Organization','foaf:Person'), 'a faof:Person' );
 
 my $types = $a->types;

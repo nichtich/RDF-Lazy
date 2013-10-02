@@ -76,8 +76,12 @@ my $a = $graph->resource('http://example.org/alice');
 $obj = $a->foaf_name;
 is_deeply( "$obj", 'Alice', 'literal object');
 
+# this was a bug
 $obj = $a->zonk;
-is_deeply( "$obj", 'foo', 'property with default namespace');
+ok !$a->zonk, 'no result without prefix';
+#$a->graph->ns( '' => $a->graph->ns('x') ); # default prefix
+#$obj = $a->x_zonk;
+#-is_deeply( "$obj", 'foo', 'property with default namespace');
 
 isa_ok( $graph->namespaces, 'RDF::NS' );
 
@@ -95,11 +99,11 @@ $graph->add( statement(
   iri('http://example.org/alice'), iri('http://example.org/zonk'), literal('doz'),
 ));
 
-$obj = $a->zonk('@fr');
+$obj = $a->x_zonk('@fr');
 is_deeply( "$obj", 'bar', 'property with filter');
 #$obj
 
-$obj = $a->zonk('@en','');
+$obj = $a->x_zonk('@en','');
 is_deeply( "$obj", 'doz', 'property with filter');
 
 my $ttl = $a->ttl;
