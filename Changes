@@ -1,6 +1,8 @@
 Revision history for Perl module RDF::Lazy
 
 {{$NEXT}}
+
+0.09  2015-10-26 16:32:04 CET
     - Migrated to Dist::Milla
     - Refactoring
 

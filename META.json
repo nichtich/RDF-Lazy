@@ -55,7 +55,7 @@
          "web" : "https://github.com/nichtich/RDF-Lazy"
       }
    },
-   "version" : "0.081",
+   "version" : "0.09",
    "x_contributors" : [
       "Jakob Voss <jakob@nichtich.de>",
       "Jakob Voss <voss@gbv.de>"
