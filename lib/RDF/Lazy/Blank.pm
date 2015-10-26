@@ -1,7 +1,6 @@
-﻿use strict;
-use warnings;
 package RDF::Lazy::Blank;
-#ABSTRACT: Blank node in a RDF::Lazy graph
+use strict;
+use warnings;
 
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
@@ -9,48 +8,45 @@ use Scalar::Util qw(blessed);
 use overload '""' => \&str;
 
 sub new {
-    my ($class, $graph, $blank) = @_;
+    my $class = shift;
+    my $graph = shift || RDF::Lazy->new;
+    my $blank = shift;
 
     $blank = RDF::Trine::Node::Blank->new( $blank )
         unless blessed($blank) and $blank->isa('RDF::Trine::Node::Blank');
     return unless defined $blank;
 
-    bless [ 
-        $blank, 
-        $graph || RDF::Lazy->new 
-    ], $class;
+    return bless [ $blank, $graph ], $class;
 }
 
 sub id {
-    $_[0]->trine->blank_identifier
+    shift->trine->blank_identifier
 }
 
 sub str {
-    '_:'.$_[0]->trine->blank_identifier
+    '_:'.shift->trine->blank_identifier
 }
 
-*qname = *str;
-
 1;
+__END__
+
+=head1 NAME
+
+RDF::Lazy::Blank - Blank node in a RDF::Lazy graph
 
 =head1 DESCRIPTION
 
-L<RDF::Lazy::Blank> represents a blank node in a L<RDF::Lazy> RDF graph. Do not
-use the constructor of this class but factory methods of L<RDF::Lazy>. General
-RDF node methods are derived from L<RDF::Lazy::Node>.
+You should not directly create instances of this class.
+See L<RDF::Lazy::Node> for general node properties.
 
-=method id
+=head1 METHODS
+
+=head2 id
 
 Return the local identifier of this node.
 
-=method qname
+=head2 str
 
 Return the local identifier, prepended by "C<_:>".
-
-=method str
-
-Return the local identifier, prepended by "C<_:>".
-
-=encoding utf8
 
 =cut

@@ -1,31 +1,26 @@
+package RDF::Lazy::Node;
 use strict;
 use warnings;
-package RDF::Lazy::Node;
-#ABSTRACT: A node in a lazy RDF graph
 
-=head1 DESCRIPTION
-
-This class wraps L<RDF::Trine::Node> and holds a pointer to the graph
-(L<RDF::Lazy>) which a node belongs to. In detail there are node types
-L<RDF::Lazy::Literal>, L<RDF::Lazy::Resource>, and L<RDF::Lazy::Blank>.
-
-=cut
-
+use RDF::Lazy::Literal;
+use RDF::Lazy::Resource;
+use RDF::Lazy::Blank;
 use RDF::Trine qw(iri);
+use CGI qw(escapeHTML);
 use Carp qw(carp);
 
 our $AUTOLOAD;
-use constant RDF_TYPE => iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+our $rdf_type = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 
-sub trine { $_[0]->[0]; }
-sub graph { $_[0]->[1]; }
-sub esc { escapeHTML( $_[0]->str ) }
+sub trine { shift->[0]; }
+sub graph { shift->[1]; }
+sub esc { escapeHTML( shift->str ) }
 
-sub is_literal  { $_[0]->[0]->is_literal; }
-sub is_resource { $_[0]->[0]->is_resource; }
+sub is_literal  { shift->[0]->is_literal; }
+sub is_resource { shift->[0]->is_resource; }
 *is_uri = *is_resource;
 
-sub is_blank    { $_[0]->[0]->is_blank; }
+sub is_blank    { shift->[0]->is_blank; }
 
 sub AUTOLOAD {
     my $self = shift;
@@ -40,20 +35,23 @@ sub AUTOLOAD {
 sub type {
     my $self = shift;
     if ( @_ ) {
-        my $types = $self->rels( RDF_TYPE ); # TODO use filter?
+        my $types = $self->rels( $rdf_type ); # TODO use filter?
         foreach ( @_ ) {
             my $type = $self->graph->uri( $_ ) or next;
             return 1 if (grep { $_->str eq $type->str } @$types);
         }
-        return;
+        return 0;
     } else {
-        $self->rel( RDF_TYPE );
+        $self->rel( $rdf_type );
     }
 }
 
 *a = *type;
 
-sub types { $_[0]->rels( RDF_TYPE ); }
+sub types {
+    my $self = shift;
+    $self->rels( $rdf_type );
+}
 
 sub is {
     my $self = shift;
@@ -84,6 +82,8 @@ sub rels { $_[0]->graph->rels( @_ ); }
 sub rev  { $_[0]->graph->rev( @_ ); }
 sub revs { $_[0]->graph->revs( @_ ); }
 
+sub qname { "" };
+
 sub _autoload {
     my $self     = shift;
     my $property = shift;
@@ -91,18 +91,12 @@ sub _autoload {
     return $self->rel( $property, @_ );
 }
 
-sub escapeHTML {
-    my ($html) = @_;
-    $html =~ s/&/&amp;/gs;
-    $html =~ s/</&lt;/gs;
-    $html =~ s/>/&gt;/gs;
-    $html =~ s/"/&#34;/gs;
-    $html =~ s/'/&#39;/gs;
-    $html;
-}
 1;
-
 __END__
+
+=head1 NAME
+
+RDF::Lazy::Node - A node in a lazy RDF graph
 
 =head1 DESCRIPTION
 
@@ -120,34 +114,42 @@ RDF::Lazy::Node from a RDF::Trine::Node just like this:
 
     $graph->uri( $trine_node )
 
-=method str
+=head1 DESCRIPTION
+
+This class wraps L<RDF::Trine::Node> and holds a pointer to the graph
+(L<RDF::Lazy>) which a node belongs to. In detail there are node types
+L<RDF::Lazy::Literal>, L<RDF::Lazy::Resource>, and L<RDF::Lazy::Blank>.
+
+=head1 METHODS
+
+=head2 str
 
 Returns a string representation of the node's value. Is automatically
 called on string conversion (C<< "$x" >> equals C<< $x->str >>).
 
-=method esc
+=head2 esc
 
 Returns a HTML-escaped string representation. This can safely be used
 in HTML and XML.
 
-=method is_literal / is_resource / is_blank
+=head2 is_literal / is_resource / is_blank
 
 Returns true if the node is a literal, resource, or blank node.
 
-=method graph
+=head2 graph
 
 Returns the underlying graph L<RDF::Lazy> that the node belongs to.
 
-=method type ( [ @types ] )
+=head2 type ( [ @types ] )
 
 Returns some rdf:type of the node (if no types are provided) or checks
 whether this node is of any of the provided types.
 
-=method a ( [ @types ] )
+=head2 a ( [ @types ] )
 
 Shortcut for C<type>.
 
-=method is ( $check1 [, $check2 ... ] )
+=head2 is ( $check1 [, $check2 ... ] )
 
 Checks whether the node fullfills some matching criteria, for instance
 
@@ -160,31 +162,31 @@ Checks whether the node fullfills some matching criteria, for instance
     $x->is('^')    # is_literal and has datatype
     $x->is('^^')   # is_literal and has datatype
 
-=method ttl
+=head2 ttl
 
 Returns an RDF/Turtle representation of the node's bounded connections.
 
-=method rel ( $property [, @filters ] )
+=head2 rel ( $property [, @filters ] )
 
 Traverse the graph and return the first matching object.
 
-=method rels
+=head2 rels
 
 Traverse the graph and return all matching objects.
 
-=method rev ( $property [, @filters ] )
+=head2 rev ( $property [, @filters ] )
 
 Traverse the graph and return the first matching subject.
 
-=method revs
+=head2 revs
 
 Traverse the graph and return all matching subjects.
 
-=method trine
+=head2 trine
 
 Returns the underlying L<RDF::Trine::Node>. DO NOT USE THIS METHOD!
 
-=method qname
+=head2 qname
 
 Returns a qualified string, if possible, or the empty string.
 
@@ -208,7 +210,5 @@ in a template is an example of a "RDFPath" language):
     $x->dc_title('^')     # literal with any datatype
     $x->foaf_knows(':')   # any resource
     ...
-
-=encoding utf8
 
 =cut

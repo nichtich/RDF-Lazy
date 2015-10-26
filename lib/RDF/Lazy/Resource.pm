@@ -1,16 +1,18 @@
-﻿use strict;
-use warnings;
 package RDF::Lazy::Resource;
-#ABSTRACT: URI reference node (aka resource) in a RDF::Lazy graph
+use strict;
+use warnings;
 
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
+use CGI qw(escapeHTML);
 use Try::Tiny;
 
 use overload '""' => \&str;
 
 sub new {
-    my ($class, $graph, $resource) = @_;
+    my $class    = shift;
+    my $graph    = shift || RDF::Lazy->new;
+    my $resource = shift;
 
     return unless defined $resource;
 
@@ -19,14 +21,11 @@ sub new {
         return unless defined $resource;
     }
 
-    bless [ 
-        $resource,
-        $graph || RDF::Lazy->new
-    ], $class;
+    return bless [ $resource, $graph ], $class;
 }
 
 sub str {
-    $_[0]->trine->uri_value;
+    shift->trine->uri_value;
 }
 
 *uri  = *str;
@@ -34,8 +33,7 @@ sub str {
 *href = *RDF::Lazy::Node::esc;
 
 sub qname {
-    my ($self) = @_;
-
+    my $self = shift;
     try {
         my ($ns,$local) = $self->[0]->qname; # let Trine split
         $ns = $self->[1]->ns($ns) || return "";
@@ -46,30 +44,34 @@ sub qname {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+RDF::Lazy::Resource - URI reference node (aka resource) in a RDF::Lazy graph
 
 =head1 DESCRIPTION
 
-L<RDF::Lazy::Resource> represents an URI references in a L<RDF::Lazy> RDF
-graph. Do not use the constructor of this class but factory methods of
-L<RDF::Lazy>. General RDF node methods are derived from L<RDF::Lazy::Node>.
+You should not directly create instances of this class.
+See L<RDF::Lazy::Node> for general node properties.
 
-=method str
+=head1 METHODS
+
+=head2 str
 
 Return the URI value of this node as string. Is also used for comparing nodes.
 
-=method uri
+=head2 uri
 
 Alias for method 'str'.
 
-=method href
+=head2 href
 
 Return the HTML-escaped URI value. Alias for method 'esc'.
 
-=method qname
+=head2 qname
 
 Returns a qualified name (C<prefix:local>) if a mathcing namespace prefix is
 defined. See also method L<RDF::Lazy#ns> for namespace handling.
-
-=encoding utf8
 
 =cut
