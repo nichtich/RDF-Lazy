@@ -27,7 +27,8 @@ ok !$s->is_en, 'bn != en';
 
 $s = $rdf->literal('Sessel','de-AT');
 is $s->str, 'Sessel';
-is $s->lang, 'de-AT', 'de-AT';
+is $s->lang, 'de-at', 'de-at';
+
 ok $s->is('@'), 'has language tag';
 ok $s->is_de_AT && $s->is('@de-AT'), 'de-AT = de_AT';
 ok $s->is_de_at && $s->is('@de-at'), 'de-AT = de_at';
@@ -42,7 +43,6 @@ is $s->datatype->str, NS->xsd_int, 'datatype';
 ok $s->datatype('xsd:int'), 'datatype';
 ok $s->datatype(NS->xsd_float,NS->xsd_int), 'datatype';
 
-$s = $rdf->literal('true');
-ok !$s->datatype, 'plain literal';
+ok !$rdf->literal('true')->datatype, 'plain literal';
 
 done_testing;

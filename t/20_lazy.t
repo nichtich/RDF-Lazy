@@ -77,11 +77,8 @@ $obj = $a->foaf_name;
 is_deeply( "$obj", 'Alice', 'literal object');
 
 # this was a bug
-$obj = $a->zonk;
-ok !$a->zonk, 'no result without prefix';
-#$a->graph->ns( '' => $a->graph->ns('x') ); # default prefix
-#$obj = $a->x_zonk;
-#-is_deeply( "$obj", 'foo', 'property with default namespace');
+$obj = $a->blablabla;
+ok !$a->blablabla, 'no result without prefix';
 
 isa_ok( $graph->namespaces, 'RDF::NS' );
 

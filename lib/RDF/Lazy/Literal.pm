@@ -1,4 +1,5 @@
 package RDF::Lazy::Literal;
+use v5.10;
 use strict;
 use warnings;
 
@@ -14,7 +15,7 @@ our $LANGTAG = qr/^(([a-z]{2,8}|[a-z]{2,3}-[a-z]{3})(-[a-z0-9_]+)?-?)$/i;
 sub new {
     my $class   = shift;
     my $graph   = shift || RDF::Lazy->new;
-    my $literal = shift;
+    my $literal = shift // '';
 
     my ($language, $datatype) = @_;
 
@@ -43,7 +44,7 @@ sub lang {
     my $lang = $self->trine->literal_value_language;
     return $lang if not @_ or not $lang;
 
-    my $xxx = shift || "";
+    my $xxx = lc(shift || "");
     $xxx =~ s/_/-/g;
     return unless $xxx =~ $LANGTAG;
 
@@ -59,9 +60,9 @@ sub datatype {
     my $type = $self->graph->resource( $self->trine->literal_datatype );
     return $type unless @_ and $type;
 
-    foreach my $t (@_) {
-        $t = $self->graph->uri( $t );
-        return 1 if $t->is_resource and $t eq $type;
+    foreach (@_) {
+        my $t = $self->graph->uri( $_ );
+        return 1 if $t->is_resource and $t->str eq $type->str;
     }
 
     return;

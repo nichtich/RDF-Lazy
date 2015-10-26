@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.10.1;
 
-our $VERSION = '0.081';
+our $VERSION = '0.09';
 
 use RDF::Trine::Model;
 use RDF::NS qw(20120827);
@@ -251,6 +251,8 @@ sub uri {
 
     if ( $node =~ /^<(.*)>$/ ) {
         return RDF::Lazy::Resource->new( $self, $1 );
+    } elsif ( $node =~ qr{^(https?://.*)} ) {
+        return RDF::Lazy::Resource->new( $self, $1 );
     } elsif ( $node =~ /^_:(.*)$/ ) {
         return RDF::Lazy::Blank->new( $self, $1 );
     } elsif ( $node =~ /^\[\s*\]$/ ) {
@@ -369,7 +371,9 @@ sub _query {
     $subject = $self->uri($subject)
         unless blessed($subject) and $subject->isa('RDF::Lazy::Node');
 
-    $property = $self->uri($property) if defined $property;
+    if (defined $property) {
+        $property = $self->uri($property) // return;
+    }
     $property = $property->trine if defined $property;
 
     my @res;
@@ -379,6 +383,7 @@ sub _query {
     } elsif ($dir eq 'rev') {
         @res = $self->{model}->subjects( $property, $subject->trine );
     }
+
 
     @res = map { $self->uri( $_ ) } @res;
 
@@ -398,6 +403,7 @@ sub _relrev {
         # get objects / subjects
         my ($property,@filter) = @_;
         $all = 1 if ($property and not ref $property and $property =~ s/^(.+[^_])_$/$1/);
+
         return $self->_query( $all, $type, $subject, $property, @filter );
     } else {
         # get all predicates

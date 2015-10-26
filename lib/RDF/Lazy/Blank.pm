@@ -27,6 +27,8 @@ sub str {
     '_:'.shift->trine->blank_identifier
 }
 
+*qname = *str;
+
 1;
 __END__
 
