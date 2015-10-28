@@ -6,7 +6,7 @@ use RDF::Lazy::Literal;
 use RDF::Lazy::Resource;
 use RDF::Lazy::Blank;
 use RDF::Trine qw(iri);
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities); 
 use Carp qw(carp);
 
 our $AUTOLOAD;
@@ -14,7 +14,7 @@ our $rdf_type = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 
 sub trine { shift->[0]; }
 sub graph { shift->[1]; }
-sub esc { escapeHTML( shift->str ) }
+sub esc { encode_entities( shift->str ) }
 
 sub is_literal  { shift->[0]->is_literal; }
 sub is_resource { shift->[0]->is_resource; }

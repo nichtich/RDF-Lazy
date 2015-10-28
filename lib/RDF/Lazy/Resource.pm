@@ -4,7 +4,6 @@ use warnings;
 
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
-use CGI qw(escapeHTML);
 use Try::Tiny;
 
 use overload '""' => \&str;

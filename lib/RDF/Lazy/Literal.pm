@@ -5,7 +5,6 @@ use v5.10;
 
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
-use CGI qw(escapeHTML);
 
 use overload '""' => sub { shift->str; };
 

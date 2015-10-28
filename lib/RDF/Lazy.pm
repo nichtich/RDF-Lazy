@@ -7,7 +7,7 @@ our $VERSION = '0.09';
 
 use RDF::Trine::Model;
 use RDF::NS qw(20120827);
-use CGI qw(escapeHTML);
+use HTML::Entities qw(encode_entities); 
 
 use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::Turtle;
@@ -212,7 +212,7 @@ sub rdfxml {
 
 sub ttlpre {
     return '<pre class="turtle">'
-        . escapeHTML( "# " . ($_[0]->str||'') . "\n" . turtle(@_) )
+        . encode_entities( "# " . ($_[0]->str||'') . "\n" . turtle(@_) )
         . '</pre>';
 }
 
