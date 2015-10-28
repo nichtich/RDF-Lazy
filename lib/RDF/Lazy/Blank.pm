@@ -1,6 +1,7 @@
 package RDF::Lazy::Blank;
 use strict;
 use warnings;
+use v5.10;
 
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);

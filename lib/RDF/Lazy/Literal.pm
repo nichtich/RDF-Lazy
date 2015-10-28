@@ -1,7 +1,7 @@
 package RDF::Lazy::Literal;
-use v5.10;
 use strict;
 use warnings;
+use v5.10;
 
 use base 'RDF::Lazy::Node';
 use Scalar::Util qw(blessed);
@@ -41,7 +41,7 @@ sub str {
 
 sub lang {
     my $self = shift;
-    my $lang = $self->trine->literal_value_language;
+    my $lang = lc($self->trine->literal_value_language // '');
     return $lang if not @_ or not $lang;
 
     my $xxx = lc(shift || "");

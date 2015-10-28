@@ -1,7 +1,7 @@
 package RDF::Lazy;
 use strict;
 use warnings;
-use v5.10.1;
+use v5.10;
 
 our $VERSION = '0.09';
 
@@ -401,8 +401,8 @@ sub _relrev {
 
     if (@_) {
         # get objects / subjects
-        my ($property,@filter) = @_;
-        $all = 1 if ($property and not ref $property and $property =~ s/^(.+[^_])_$/$1/);
+        my ($property, @filter) = @_;
+        $all = 1 if ($property and !ref $property and $property =~ s/^(.+[^_])_$/$1/);
 
         return $self->_query( $all, $type, $subject, $property, @filter );
     } else {
@@ -443,6 +443,16 @@ __END__
 =head1 NAME
 
 RDF::Lazy - Lazy typing access to RDF data
+
+=begin markdown
+
+# STATUS
+
+[![Build Status](https://travis-ci.org/nichtich/RDF-Lazy.png)](https://travis-ci.org/nichtich/RDF-Lazy)
+[![Coverage Status](https://coveralls.io/repos/nichtich/RDF-Lazy/badge.png)](https://coveralls.io/r/nichtich/RDF-Lazy)
+[![Kwalitee Score](http://cpants.cpanauthors.org/dist/RDF-Lazy.png)](http://cpants.cpanauthors.org/dist/RDF-Lazy)
+
+=end markdown
 
 =head1 SYNOPSIS
 
